@@ -68,7 +68,7 @@ section{display:flex;flex-direction:column;gap:18px;min-width:0}
 .ctl .row{display:flex;justify-content:space-between;gap:8px}
 input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 input[type=number]{font:inherit;font-family:var(--mono);font-size:14px;width:72px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;align-self:flex-start}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden;align-self:flex-start;max-width:100%}
 .seg button{white-space:nowrap;font:inherit;font-size:14px;padding:6px 14px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface);font-weight:500}
@@ -227,14 +227,14 @@ S.F = S.C*((S.C'*S.C)\S.Fvec);            <span class="c">% 式 (20a)，也是 W
   <div class="panel">
     <h3>模型參數</h3>
     <div class="controls">
-      <div class="ctl"><span>相關函數的時間支持</span>
+      <div class="ctl" style="flex:1 1 300px"><span>相關函數的時間支持</span>
         <div class="seg" data-seg><button type="button" data-win="1">三角窗 25τ（論文）</button><button type="button" data-win="0">無窗（無限長）</button></div></div>
       <label class="ctl" for="pw"><span class="row"><span>每抽頭白雜訊功率</span><output id="pwo"></output></span>
         <input type="range" id="pw" min="0.01" max="0.5" step="0.01" value="0.1"></label>
       <button type="button" class="btn" id="resetM">回到論文設定</button>
     </div>
     <div id="chPsd"></div>
-    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到。三角窗讓頻譜的邊緣變圓，這和論文 Fig. 10 畫出來的形狀一致。</p>
+    <p class="cap">三個源的功率頻譜（dB），由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，比兩個雜訊源低 10 dB、和白雜訊同一個量級，所以用對數刻度才看得到它。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 畫出來的形狀一致。</p>
   </div>
   <div class="panel">
     <h3>R<sub>xx</sub> 的特徵值</h3>
@@ -328,8 +328,8 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
     <div class="controls">
       <label class="ctl" for="mu1"><span class="row"><span>收斂常數 μ</span><output id="mu1o"></output></span>
         <input type="range" id="mu1" min="0.002" max="0.05" step="0.001" value="0.01"></label>
-      <div class="ctl"><span>算術精度</span>
-        <div class="seg" data-seg><button type="button" data-dig="6">6 位有效數字（HP-2116）</button><button type="button" data-dig="4">4 位</button><button type="button" data-dig="0">雙精度</button></div></div>
+      <div class="ctl" style="flex:1 1 320px"><span>算術精度（有效數字）</span>
+        <div class="seg" data-seg><button type="button" data-dig="6">6 位（HP-2116）</button><button type="button" data-dig="4">4 位</button><button type="button" data-dig="0">雙精度</button></div></div>
       <label class="ctl" for="nad"><span class="row"><span>更新次數 N</span><output id="nado"></output></span>
         <input type="range" id="nad" min="200" max="2000" step="100" value="200"></label>
       <label class="ctl" for="kcur" style="flex:2 1 220px"><span class="row"><span>已更新次數 k</span><output id="kcuro"></output></span>
@@ -635,8 +635,10 @@ function runSetup() {
   document.querySelectorAll('[data-win]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.win === '1') === state.win)));
   S = setup({ win: state.win, pw: state.pw, fv: state.fv });
   const fs = range(0, 0.0025, 0.5);
-  chPsd.set({ title: '功率頻譜', x: [0, 0.5], y: [0, 24], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [0, 5, 10, 15, 20], xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率頻譜密度', xName: 'f', xDigits: 3, yDigits: 2, h: 240,
-    series: SRC.map(s => ({ name: `${s.name}（P = ${s.P.toFixed(1)}，${s.th}°）`, c: s.c, xs: fs, ys: psd(s, state.win, fs) })) });
+  const dB = v => 10 * Math.log10(Math.max(v, 1e-5));
+  chPsd.set({ title: '功率頻譜', x: [0, 0.5], y: [-40, 15], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [-40, -30, -20, -10, 0, 10], yFmt: t => t + ' dB', xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率頻譜密度 (dB)', xName: 'f', xDigits: 3, yDigits: 1, h: 260,
+    hlines: [{ y: dB(state.pw), label: `白雜訊（每抽頭 ${state.pw.toFixed(2)}）`, cls: 'thr' }],
+    series: SRC.map(s => ({ name: `${s.name}（P = ${s.P.toFixed(1)}，${s.th}°）`, c: s.c, xs: fs, ys: psd(s, state.win, fs).map(dB) })) });
   const lam = S.lambda, idx = lam.map((_, i) => i + 1), sigShow = S.sigAll.map(v => Math.max(v, 0));
   $('tilesR').innerHTML = [['λ_min', lam[0].toFixed(4), '論文 0.111'], ['λ_max', lam[N - 1].toFixed(3), '論文 8.355'], ['tr(R_xx)', S.trR.toFixed(2), '抽頭功率總和'], ['tr(PR_xxP)', S.trPRP.toFixed(2), `非零特徵值 ${S.sigma.length} 個`]]
     .map(t => `<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="s">${t[2]}</div></div>`).join('');

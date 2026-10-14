@@ -567,7 +567,7 @@ class Chart {
   draw() {
     const c = this.cfg; if (!c) return;
     const W = Math.max(280, this.host.clientWidth || 600), H = c.h || Math.round(Math.min(330, Math.max(220, W * 0.46)));
-    const m = { l: 52, r: 12, t: c.vlines ? 20 : 10, b: 40 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const m = { l: c.yFmt ? 66 : 52, r: 12, t: c.vlines ? 20 : 10, b: 40 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
     const X = v => m.l + (v - c.x[0]) / (c.x[1] - c.x[0]) * pw, Y = v => m.t + (1 - (v - c.y[0]) / (c.y[1] - c.y[0])) * ph;
     this.geo = { m, pw, ph, W, H, X };
     const id = 'cp' + charts.indexOf(this), yl = c.yFmt || (t => String(t).replace('-', '−'));

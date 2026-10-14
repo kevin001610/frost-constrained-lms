@@ -1,0 +1,13 @@
+Frost (1972) reproduction  --  K = 4 sensors, J = 4 taps, KJ = 16 weights
+F^T = [1 -2 1.5 2]
+eigenvalues of Rxx      : 0.1110 ... 8.3556    (paper 0.111 ... 8.355)
+nonzero eig of P Rxx P  : 0.1111 ... 7.7681
+tr(Rxx) = 35.200   tr(P Rxx P) = 26.806
+mu = 0.010 ;  1/sigma_max = 0.1287 ; bound (26) = 0.0472 (paper 0.074) ; bound (28) = 0.0189
+misadjustment (27)      : 15.5 % ... 17.0 %   (paper 15.2 ... 17.0 %)
+time constants (25)     : fastest 12.9, slowest 900 adaptations
+optimum output power    : 2.4954 ; initial W(0)=F output power : 6.3524
+single run, last 50 of 200: CLMS mean power 2.827, GP mean power 2.827
+ensemble (300 runs) mean output power at k=300: 2.914 ; bounds 2.882 ... 2.920
+6-digit constraint error, mean over 200 adaptations: CLMS 2.89e-12, GP 1.77e-10 ; GP at k=2000: 6.06e-08
+Wopt^T = [0.0441 0.4533 0.3801 0.1224 -0.1167 -0.4017 -0.6839 -0.7977 0.9242 0.4607 0.3203 -0.2052 0.7397 0.6405 0.2852 0.3347 ]

@@ -836,7 +836,7 @@ function runOpt() {
   $('tilesOpt').innerHTML = row('最佳輸出功率 E[y_opt²]', S.Popt.toFixed(3), '論文 Fig. 11 讀圖約 2.5') + row('W(0) = F 的輸出功率', S.PF.toFixed(3), '起點，只滿足約束') +
     row('失調量界（式 27）', `${(100 * b.Mlo).toFixed(1)}–${(100 * b.Mhi).toFixed(1)} %`, `μ = ${state.mu.toFixed(3)}；論文 15.2–17.0 %`, b.Mhi < 0 || b.Mhi > 2 ? 'ng' : '') +
     row('均方收斂上界（式 26）', b.mu26.toFixed(3), (state.mu < b.mu26 ? '✓ 目前 μ 在界內' : '✗ 目前 μ 超過，式 (27) 不再成立') + `；式 (28) 保守值 ${b.mu28.toFixed(3)}`, state.mu < b.mu26 ? 'ok' : 'ng') +
-    row('論文印的 0.074 從哪來', (2 / S.trPRP).toFixed(3), `= 2/tr(PR_xxP)，即式 (26) 少了 σ_max 項（推測）`) +
+    row('論文印的 0.074 從哪來', (2 / S.trPRP).toFixed(4), `= 2/tr(PR_xxP)，即式 (26) 少了 σ_max 項（推測）`) +
     row('平均權重收斂 2/σ_max', b.muMean.toFixed(3), `論文用的充分條件 1/σ_max = ${b.muStab.toFixed(3)}`, state.mu < b.muStab ? 'ok' : '') +
     row('時間常數（式 25）', `${b.tauFast.toFixed(1)} – ${b.tauSlow.toFixed(0)}`, '最快到最慢模式，單位：更新次數');
 }
@@ -991,7 +991,7 @@ function drawEns() {
   $('tbEns').innerHTML = `<tr><th>指標</th><th>數值</th><th>論文的說法</th></tr>` +
     `<tr><td>梯度投影法 log–log 斜率，k = 20–200（Fig. 12 的範圍）</td><td>${s1.toFixed(2)}</td><td>1（線性成長）</td></tr>` +
     `<tr><td>梯度投影法 log–log 斜率，k = 200–${T}</td><td>${s2.toFixed(2)}</td><td>1（線性成長）</td></tr>` +
-    `<tr><td>受限 LMS：k = ${T} 與 k = 20 的誤差比</td><td>×${rc.toFixed(1)}</td><td>不成長</td></tr>` +
+    `<tr><td>受限 LMS：k = ${T} 與 k = 20 的誤差比</td><td>×${rc.toFixed(1)}</td><td>有界，不隨 k 累積</td></tr>` +
     `<tr><td>k = ${T} 時兩者的誤差</td><td>${sci(sc[T])} / ${sci(sg[T])}</td><td>—</td></tr>`;
   const rule = { even: '四捨六入五成雙', away: '四捨五入（同 MATLAB round）', trunc: '截斷' }[ENS.err.rule || ENS.rule];
   const nF = paperS().F.reduce((a, v) => a + v * v, 0).toFixed(2), nW = paperS().Wopt.reduce((a, v) => a + v * v, 0).toFixed(2);

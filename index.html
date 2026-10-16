@@ -35,7 +35,6 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16p
 header .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
 .cover{border-top:2px solid var(--ink);border-bottom:1px solid var(--line);padding-block:22px 30px;display:flex;flex-direction:column;gap:20px}
 .cover h1{margin:0;font-size:clamp(34px,7vw,54px)}
-.cover-art{display:block;width:100%;max-width:600px;height:auto}
 .credits{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 20px;font-size:18px}
 .credits dt{color:var(--muted);font-size:14px;align-self:center;white-space:nowrap}
 .credits dd{margin:0;font-weight:500}
@@ -110,29 +109,20 @@ pre .c{color:var(--muted)}
 .tile .v small{font-size:.62em}
 .tile .s{font-size:12.5px;color:var(--muted)}
 .ok{color:var(--good)} .ng{color:var(--bad)}
-/* tap grid */
-.taps{display:grid;grid-template-columns:auto repeat(4,1fr);gap:6px 6px;font-family:var(--mono);font-size:12.5px;align-items:center}
-.taps .hd{color:var(--muted);text-align:center;font-size:12px}
-.taps .rl{color:var(--muted);font-size:12px;white-space:nowrap;padding-right:6px}
-.taps .cell{border:1px solid var(--line);border-radius:5px;padding:8px 4px;text-align:center;background:var(--surface);color:var(--ink)}
-.taps .cell.eq{border-color:var(--s-c);background:var(--accent-soft)}
-.taps .sum{border-top:2px solid var(--s-c);padding-top:6px;text-align:center;color:var(--s-c);font-weight:500}
 .status{font-size:14px;font-family:var(--mono)}
 table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
 th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 th:first-child,td:first-child{text-align:left;white-space:normal;min-width:9.5em}
 th{font-weight:500;color:var(--ink2);font-size:13px}
 td{font-family:var(--mono)} td:first-child{font-family:var(--body)}
-.diagram{display:block;width:100%;max-width:660px;height:auto;margin:0 auto}
-.diagram text{font-family:var(--body);font-size:17px;fill:var(--ink2)}
-.sub-t{font-size:13px;color:var(--ink2);font-weight:500;margin-bottom:2px}
+.sub-t{font-size:13px;color:var(--ink2);font-weight:500;margin-bottom:-8px}
 .tbl-src th,.tbl-src td{text-align:center}
 .tbl-src th:first-child,.tbl-src td:first-child{text-align:left}
 .tbl-sum th,.tbl-sum td{text-align:left;white-space:normal}
 .tbl-sum td{font-family:var(--body)}
 td sup{font-size:.72em;line-height:0}
 #tbAdapt th{white-space:normal}
-@media (max-width:520px){th,td{padding:6px 6px}th:first-child,td:first-child{min-width:6.5em}.tile{padding:8px 10px}.diagram text{font-size:22px}.math{white-space:normal}}
+@media (max-width:520px){th,td{padding:6px 6px}th:first-child,td:first-child{min-width:6.5em}.tile{padding:8px 10px}.math{white-space:normal}}
 footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
 /* section nav */
 html{scroll-behavior:smooth}
@@ -147,20 +137,6 @@ section{scroll-margin-top:16px}
 <div class="wrap">
 <header class="cover">
   <div class="eyebrow">SCAS SP-03 · 陣列訊號處理</div>
-  <svg class="cover-art" viewBox="0 0 600 96" role="img" aria-label="平面波入射四元件陣列，每個元件接四個抽頭的延遲線">
-    <defs><clipPath id="cvclip"><rect x="0" y="0" width="600" height="40"/></clipPath></defs>
-    <g clip-path="url(#cvclip)" stroke="var(--accent)" stroke-width="1.5" opacity=".55">
-      <line x1="-60" y1="-10" x2="80" y2="70"/><line x1="40" y1="-10" x2="180" y2="70"/><line x1="140" y1="-10" x2="280" y2="70"/><line x1="240" y1="-10" x2="380" y2="70"/><line x1="340" y1="-10" x2="480" y2="70"/><line x1="440" y1="-10" x2="580" y2="70"/><line x1="540" y1="-10" x2="680" y2="70"/>
-    </g>
-    <g fill="var(--ink)"><circle cx="60" cy="50" r="6"/><circle cx="220" cy="50" r="6"/><circle cx="380" cy="50" r="6"/><circle cx="540" cy="50" r="6"/></g>
-    <g stroke="var(--line)" stroke-width="2"><line x1="60" y1="56" x2="60" y2="80"/><line x1="220" y1="56" x2="220" y2="80"/><line x1="380" y1="56" x2="380" y2="80"/><line x1="540" y1="56" x2="540" y2="80"/></g>
-    <g fill="none" stroke="var(--ink2)" stroke-width="1.5">
-      <rect x="34" y="80" width="14" height="12"/><rect x="56" y="80" width="14" height="12"/><rect x="78" y="80" width="14" height="12"/><rect x="100" y="80" width="14" height="12"/>
-      <rect x="194" y="80" width="14" height="12"/><rect x="216" y="80" width="14" height="12"/><rect x="238" y="80" width="14" height="12"/><rect x="260" y="80" width="14" height="12"/>
-      <rect x="354" y="80" width="14" height="12"/><rect x="376" y="80" width="14" height="12"/><rect x="398" y="80" width="14" height="12"/><rect x="420" y="80" width="14" height="12"/>
-      <rect x="514" y="80" width="14" height="12"/><rect x="536" y="80" width="14" height="12"/><rect x="558" y="80" width="14" height="12"/><rect x="580" y="80" width="14" height="12"/>
-    </g>
-  </svg>
   <h1>線性約束自適應陣列處理</h1>
   <dl class="credits">
     <dt>製作人</dt><dd>葉安哲、蔡行宇</dd>
@@ -176,9 +152,9 @@ section{scroll-margin-top:16px}
 </header>
 
 <section class="intro">
-  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁只重現論文 Sec. VII 做過的模擬：Table I 的設定、Fig. 9 與 Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11、Fig. 12 的受限 LMS 與梯度投影法。</p>
+  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁只重現論文 Sec. VII 做過的模擬，圖也只畫論文有的：Table I、Fig. 9、Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11（受限 LMS）與 Fig. 12（梯度投影法）。</p>
   <nav class="toc" aria-label="章節">
-    <a href="#sec-basic">寬頻陣列</a><a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
+    <a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
   </nav>
 </section>
 
@@ -208,30 +184,6 @@ section{scroll-margin-top:16px}
   <p class="note">本頁用 JavaScript 重新實作程式的運算。亂數產生器與 MATLAB 的 <code>rng(2026)</code> 不同，而且迭代這裡用的是直接由 R<sub>xx</sub> 抽出的獨立高斯快照（論文假設相鄰兩次更新的間隔大於 58τ，快照彼此不相關），所以曲線的細節會和 MATLAB 跑出來的不同，數值與結論一致。</p>
 </section>
 
-<section id="sec-basic">
-  <div class="step">基礎 1</div>
-  <h2>寬頻陣列：K 個感測器 × J 個抽頭</h2>
-  <p>Frost 的陣列是 K 個等間距的感測器，每個感測器後面接一條 J 個抽頭的延遲線，抽頭間隔 τ，所以一共有 KJ 個權重。平面波從偏離正前方 θ 的方向進來時，相鄰感測器多一段 τ·sinθ 的傳播延遲；再往延遲線走，每個抽頭又多 τ。下表列出每個抽頭看到的總延遲（以 τ 為單位）。陣列已經對準看向方向 θ = 0°，所以訊號在同一個直行上的延遲完全相同。</p>
-  <div class="panel">
-    <div class="controls">
-      <label class="ctl" for="th0"><span class="row"><span>來波方向 θ</span><output id="th0o"></output></span>
-        <input type="range" id="th0" min="-60" max="60" step="1" value="0"></label>
-      <div class="ctl" style="flex:2 1 240px"><span>相鄰感測器延遲</span><output id="dsen"></output></div>
-    </div>
-    <div class="taps" id="taps" aria-label="每個抽頭的延遲"></div>
-    <div class="status" id="tapSt"></div>
-    <p class="cap">每格是感測器 k、抽頭 j 的延遲 (k−1)·sinθ + (j−1)。θ = 0° 時每一直行四格一樣，整個陣列對這個方向等效於一條四抽頭的 FIR 濾波器，等效權重 f<sub>j</sub> 就是第 j 直行四個權重的和。把 θ 拉開，直行就不再相同，陣列靠這個差別分辨方向。</p>
-  </div>
-  <p>這就是 J 條約束的來源：只要固定每一直行權重的和 f<sub>j</sub>，看向方向的頻率響應就被鎖住；剩下 KJ − J 個自由度拿去最小化總輸出功率。訊號與雜訊不相關時，總功率等於訊號功率加雜訊功率，而訊號功率已經被鎖定，所以最小化總功率就等於最小化雜訊功率。</p>
-  <details><summary>對照程式：權重索引與約束矩陣</summary>
-<pre>n  = (1:S.N)';                 <span class="c">% 權重索引 n = j*K + k + 1（直行優先，和 C 一致）</span>
-kk = mod(n-1, S.K);            <span class="c">% 感測器 0..K-1</span>
-jj = floor((n-1)/S.K);         <span class="c">% 抽頭 0..J-1</span>
-S.C = kron(eye(S.J), ones(S.K,1));        <span class="c">% KJ×J，c_j 挑出第 j 直行</span>
-S.P = eye(S.N) - S.C*((S.C'*S.C)\S.C');   <span class="c">% 式 (20b)</span>
-S.F = S.C*((S.C'*S.C)\S.Fvec);            <span class="c">% 式 (20a)，也是 W(0)</span></pre></details>
-</section>
-
 <section id="sec-rxx">
   <div class="part"><div class="step">程式一 · SETUP</div></div>
   <h2>Table I 的環境與 Fig. 10 的頻譜</h2>
@@ -248,9 +200,8 @@ S.F = S.C*((S.C'*S.C)\S.Fvec);            <span class="c">% 式 (20a)，也是 W
   <p>三角窗、sinc 與餘弦各自都是合法的相關函數，乘積仍是合法的相關函數，所以 R<sub>xx</sub> 保證正定。抽頭 a 與抽頭 b 的相關就是 r 在它們延遲差上的值，三個源相加，再在對角線加上白雜訊。</p>
   <div class="panel">
     <h3>入射訊號的功率頻譜（對照論文 Fig. 10）</h3>
-    <div class="seg" data-seg><button type="button" data-psd="1">線性（同 Fig. 10）</button><button type="button" data-psd="0">dB</button></div>
     <div id="chPsd"></div>
-    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，在論文的線性刻度下幾乎貼在橫軸上；切到 dB 才看得出它的頻帶落在 0.25–0.35。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 的形狀一致。</p>
+    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，和論文一樣幾乎貼在橫軸上，頻帶落在 0.25–0.35。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 的形狀一致。</p>
   </div>
   <div class="panel">
     <h3>R<sub>xx</sub> 的特徵值範圍</h3>
@@ -308,70 +259,26 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
   <div class="math">受限 LMS　<i>W</i>(<i>k</i>+1) = <i>P</i> [ <i>W</i>(<i>k</i>) − μ <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>) ] + <i>F</i> ，　<i>W</i>(0) = <i>F</i></div>
   <div class="math">梯度投影法　<i>W</i>(<i>k</i>+1) = <i>W</i>(<i>k</i>) − μ <i>P</i> <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>)</div>
   <div class="panel">
-    <div class="seg" data-seg><button type="button" data-geo="0">W(k) 在 Λ 上（Fig. 6）</button><button type="button" data-geo="1">W(k) 已因捨入偏離 Λ（Fig. 8）</button></div>
-    <svg class="diagram" viewBox="20 6 590 204" role="img" aria-label="受限 LMS 更新的幾何：梯度步離開約束平面，正交投影到子空間，再加 F 回到平面；W(k) 偏離約束平面時，受限 LMS 回到平面，梯度投影法沿偏移平面前進">
-      <defs>
-        <marker id="ah-raw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-raw)"/></marker>
-        <marker id="ah-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-f)"/></marker>
-        <marker id="ah-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-c)"/></marker>
-        <marker id="ah-fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-fb)"/></marker>
-      </defs>
-      <line x1="60" y1="180" x2="580" y2="60" stroke="var(--ink)" stroke-width="2"/>
-      <text x="452" y="114">約束平面 Λ</text>
-      <line x1="30" y1="120" x2="470" y2="18" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="6 4"/>
-      <text x="128" y="62">子空間 Σ</text>
-      <line x1="96" y1="105" x2="110.6" y2="168.3" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>
-      <circle cx="96" cy="105" r="3.5" fill="var(--muted)"/><text x="50" y="100">原點</text>
-      <circle cx="110.6" cy="168.3" r="5" fill="var(--accent)"/><text x="124" y="200">F</text>
-      <g id="geo0">
-        <circle cx="270" cy="131.5" r="5" fill="var(--ink)"/><text x="240" y="162">W(k)</text>
-        <line x1="270" y1="131.5" x2="368" y2="72.4" stroke="var(--s-raw)" stroke-width="2" marker-end="url(#ah-raw)"/>
-        <text x="298" y="94">①</text>
-        <circle cx="372" cy="70" r="4" fill="var(--s-raw)"/><text x="384" y="76">W′</text>
-        <line x1="372" y1="70" x2="366.6" y2="46.7" stroke="var(--s-f)" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#ah-f)"/>
-        <text x="342" y="64">②</text>
-        <circle cx="365.7" cy="42.8" r="4" fill="var(--s-f)"/><text x="316" y="32">P[W′]</text>
-        <line x1="365.7" y1="42.8" x2="379.4" y2="102.2" stroke="var(--s-c)" stroke-width="2" marker-end="url(#ah-c)"/>
-        <text x="388" y="100">③</text>
-        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="384" y="138">W(k+1)</text>
-      </g>
-      <g id="geo1" hidden>
-        <line x1="60" y1="161.5" x2="580" y2="41.5" stroke="var(--s-fb)" stroke-width="1.5" stroke-dasharray="6 4"/>
-        <text x="470" y="40" style="fill:var(--s-fb)">Λ + ε</text>
-        <circle cx="266" cy="114" r="5" fill="var(--ink)"/><text x="206" y="106">W(k)</text>
-        <line x1="266" y1="114" x2="364" y2="54.9" stroke="var(--s-raw)" stroke-width="2" marker-end="url(#ah-raw)"/>
-        <circle cx="368" cy="52.5" r="4" fill="var(--s-raw)"/><text x="330" y="42">W′</text>
-        <line x1="368" y1="52.5" x2="379.4" y2="102.2" stroke="var(--s-c)" stroke-width="2" marker-end="url(#ah-c)"/>
-        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="390" y="134" style="fill:var(--s-c)">受限 LMS</text>
-        <line x1="266" y1="114" x2="372.3" y2="89.4" stroke="var(--s-fb)" stroke-width="2" marker-end="url(#ah-fb)"/>
-        <circle cx="376.3" cy="88.5" r="5" fill="var(--s-fb)"/><text x="210" y="176" style="fill:var(--s-fb)">梯度投影法</text>
-      </g>
-    </svg>
-    <p class="cap" id="geoCap"></p>
-  </div>
-
-  <div class="panel">
     <h3>論文的模擬設定</h3>
-    <p class="cap">6 位有效數字的浮點算術（HP-2116）、μ = 0.01、W(0) = F、200 次更新；兩種演算法吃完全相同的一組資料，和論文一樣。</p>
-    <div class="controls">
-      <button type="button" class="btn" id="play">播放收斂過程</button>
-      <button type="button" class="btn" id="reseed">換一組資料重跑</button>
+    <p class="cap">6 位有效數字的浮點算術（HP-2116）、μ = 0.01、W(0) = F、200 次更新；梯度投影法用的是和受限 LMS 完全相同的資料，和論文一樣。</p>
+    <div class="controls"><button type="button" class="btn" id="reseed">換一組資料重跑</button></div>
+  </div>
+  <div class="two">
+    <div class="panel">
+      <h3>Fig. 11　受限 LMS</h3>
+      <div class="sub-t">輸出功率</div><div id="chPowC"></div>
+      <div class="sub-t">約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup></div><div id="chErrC"></div>
+    </div>
+    <div class="panel">
+      <h3>Fig. 12　梯度投影法</h3>
+      <div class="sub-t">輸出功率</div><div id="chPowG"></div>
+      <div class="sub-t">約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup>（刻度放大 10 倍）</div><div id="chErrG"></div>
     </div>
   </div>
-
   <div class="panel">
-    <h3>輸出功率（對照 Fig. 11、Fig. 12 上圖）</h3>
-    <div id="chPow"></div>
-    <p class="cap">和論文一樣有三條水平線：實線是最佳輸出功率，兩條虛線是最佳值加上式 (27) 的失調量上下界。輸出功率從 W(0) = F 的值一路往下掉，穩態在界附近抖動；兩種演算法的曲線幾乎重合，因為 200 次內梯度投影法累積的誤差還很小（論文 Sec. VII 最後一段）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。</p>
-  </div>
-  <div class="panel">
-    <h3>約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup>（對照 Fig. 11、Fig. 12 下圖）</h3>
-    <div class="two">
-      <div><div class="sub-t"><span class="sw b-c"></span>受限 LMS（Fig. 11 刻度）</div><div id="chErrC"></div></div>
-      <div><div class="sub-t"><span class="sw b-fb"></span>梯度投影法（Fig. 12 刻度，放大 10 倍）</div><div id="chErrG"></div></div>
-    </div>
     <div class="scroll"><table id="tbAdapt"></table></div>
-    <p class="cap">論文兩張下圖的縱軸差了 10 倍（6×10<sup>−11</sup> 與 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，一步步累積，像隨機漫步一樣離開約束平面。</p>
+    <p class="cap">上圖和論文一樣有三條水平線：實線是最佳輸出功率，兩條虛線是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩張上圖幾乎相同，因為 200 次內梯度投影法累積的誤差還很小。</p>
+    <p class="cap">下圖的縱軸差了 10 倍（6×10<sup>−11</sup> 與 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
   </div>
   <details><summary>對照程式：受限 LMS 與梯度投影法的主迴圈</summary>
 <pre>W = q(S.F);                              <span class="c">% W(0) = F；q() 把每個值捨入到 6 位有效數字</span>
@@ -397,7 +304,7 @@ out.cerr = sum(E.^2, 1);                 <span class="c">% 約束誤差 ‖CᵀW
   <h2>約束解決什麼</h2>
   <div class="scroll"><table class="tbl-sum">
     <tr><th>項目</th><th><span class="sw b-c"></span>受限 LMS（式 22）</th><th><span class="sw b-fb"></span>梯度投影法（式 31）</th></tr>
-    <tr><td>每步做什麼</td><td>走一步、投影到 Σ、加 F 回到 Λ</td><td>把投影後的梯度加到 W(k)，假設 W(k) 已在 Λ 上</td></tr>
+    <tr><td>每步做什麼</td><td>走一步、投影到約束子空間、加回 F</td><td>把投影後的梯度加到 W(k)，假設 W(k) 已滿足約束</td></tr>
     <tr><td>輸出功率</td><td>收斂到最佳值加失調量</td><td>200 次內幾乎相同</td></tr>
     <tr><td>捨入誤差</td><td>每步被拉回約束平面，不累積</td><td>沿平面平行移動，像隨機漫步累積</td></tr>
     <tr><td>需要的先驗</td><td colspan="2">只要看向方向與想要的頻率響應；訊號與雜訊的統計都不需要</td></tr>
@@ -533,7 +440,7 @@ const sup = s => String(s).replace('-', '⁻').replace(/\d/g, c => '⁰¹²³⁴
 const sci = v => { if (!(v > 0)) return '0'; let e = Math.floor(Math.log10(v)), m = (v / 10 ** e).toFixed(1); if (m === '10.0') { m = '1.0'; e += 1; } return `${m}×10<sup>${e < 0 ? '−' : ''}${Math.abs(e)}</sup>`; };
 // the paper's simulation (Sec. VII): Table I, F = [1, -2, 1.5, 2], mu = 0.01, 6 significant digits, 200 adaptations
 const PAPER = { fv: [1, -2, 1.5, 2], mu: 0.01, pw: 0.1, win: true, digits: 6, Nad: 200 };
-const state = { seed: 2026, k: null, psdLin: true, geo: 0 };
+const state = { seed: 2026 };
 
 /* ---- small SVG line chart with legend + hover readout ---- */
 const charts = [];
@@ -592,18 +499,6 @@ class Chart {
 function range(a, step, b) { const out = []; const cnt = Math.round((b - a) / step); for (let i = 0; i <= cnt; i++) out.push(a + i * step); return out; }
 const tile = (k, v, s, cls = '') => `<div class="tile"><div class="k">${k}</div><div class="v ${cls}">${v}</div><div class="s">${s}</div></div>`;
 
-/* ---- basics 1: tap grid ---- */
-function drawTaps() {
-  const th = +$('th0').value, d = Math.sin(th * D2R);
-  $('th0o').textContent = fmt(th, 0) + '°'; $('dsen').textContent = `sin(${fmt(th, 0)}°) · τ = ${fmt(d, 3)} τ`;
-  let h = '<div></div>'; for (let j = 0; j < J; j++) h += `<div class="hd">抽頭 ${j + 1}</div>`;
-  const same = Math.abs(d) < 1e-9;
-  for (let k = 0; k < K; k++) { h += `<div class="rl">感測器 ${k + 1}</div>`; for (let j = 0; j < J; j++) h += `<div class="cell${same ? ' eq' : ''}">${fmt(k * d + j, 2)} τ</div>`; }
-  h += '<div class="rl">直行和</div>'; for (let j = 0; j < J; j++) h += `<div class="sum">f<sub>${j + 1}</sub></div>`;
-  $('taps').innerHTML = h;
-  $('tapSt').innerHTML = same ? '<span class="ok">✓ θ = 0°：每一直行延遲相同 → 陣列等效於一條 J = 4 抽頭的 FIR 濾波器，等效權重 f<sub>j</sub> = 直行和</span>' : `θ = ${fmt(th, 0)}°：同一直行內相鄰感測器差 ${fmt(d, 2)} τ，四個權重看到的不是同一段波形；約束只鎖住 0° 的響應，這個方向的響應由演算法自由調整（壓低）`;
-}
-
 /* ---- setup: Table I, Fig. 10, eigenvalues, Fig. 9, Sec. VII numbers ---- */
 const chPsd = new Chart($('chPsd')), chResp = new Chart($('chResp'));
 const S = setup({ win: PAPER.win, pw: PAPER.pw, fv: PAPER.fv }), B = bounds(S, PAPER.mu);
@@ -623,72 +518,43 @@ function drawSetup() {
   drawPsd();
 }
 function drawPsd() {
-  const fs = range(0, 0.0025, 0.5), dB = v => 10 * Math.log10(Math.max(v, 1e-5));
-  document.querySelectorAll('[data-psd]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.psd === '1') === state.psdLin)));
-  const spec = SRC.map(s => psd(s, true, fs)), names = SRC.map(s => `${s.name}（${s.th}°）`);
-  const base = { title: '功率頻譜（Fig. 10）', x: [0, 0.5], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], xLabel: '頻率（1.0 = 1/τ）', xName: 'f', xDigits: 3, h: 260 };
-  if (state.psdLin) {
-    const top = Math.ceil(Math.max(...spec.flat()) / 2) * 2;
-    chPsd.set({ ...base, y: [0, top], yTicks: range(0, 2, top), yLabel: '功率頻譜密度', yDigits: 2,
-      hlines: [{ y: PAPER.pw, label: '白雜訊 0.1', cls: 'thr', left: true }],
-      series: SRC.map((s, i) => ({ name: names[i], c: s.c, xs: fs, ys: spec[i] })) });
-  } else
-    chPsd.set({ ...base, y: [-40, 15], yTicks: [-40, -30, -20, -10, 0, 10], yFmt: t => (t < 0 ? '−' : '') + Math.abs(t), yLabel: '功率頻譜密度 (dB)', yDigits: 1,
-      hlines: [{ y: dB(PAPER.pw), label: '白雜訊 0.1', cls: 'thr', left: true }],
-      series: SRC.map((s, i) => ({ name: names[i], c: s.c, xs: fs, ys: spec[i].map(dB) })) });
+  const fs = range(0, 0.0025, 0.5), spec = SRC.map(s => psd(s, true, fs)), top = Math.ceil(Math.max(...spec.flat()) / 2) * 2;
+  chPsd.set({ title: '功率頻譜（Fig. 10）', x: [0, 0.5], y: [0, top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: range(0, 2, top), xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率', xName: 'f', xDigits: 3, yDigits: 2, h: 260,
+    hlines: [{ y: PAPER.pw, label: '白雜訊 0.1', cls: 'thr', left: true }],
+    series: SRC.map((s, i) => ({ name: `${s.name}（${s.th}°）`, c: s.c, xs: fs, ys: spec[i] })) });
 }
 
-/* ---- adapt: Fig. 11 / Fig. 12 ---- */
-const chPow = new Chart($('chPow')), chErrC = new Chart($('chErrC')), chErrG = new Chart($('chErrG'));
-let run = null, timer = null;
-function runAdapt() { run = adapt(S, PAPER.fv, PAPER.mu, PAPER.Nad, PAPER.digits, state.seed); drawK(); }
-function drawK() {
-  const Nad = PAPER.Nad, k = state.k, xs = range(0, 1, Nad), xt = range(0, 50, Nad), cur = k == null ? null : k;
+/* ---- adapt: Fig. 11 (constrained LMS) and Fig. 12 (gradient projection), each power on top and constraint error below ---- */
+const chPowC = new Chart($('chPowC')), chErrC = new Chart($('chErrC')), chPowG = new Chart($('chPowG')), chErrG = new Chart($('chErrG'));
+let run = null;
+function runAdapt() { run = adapt(S, PAPER.fv, PAPER.mu, PAPER.Nad, PAPER.digits, state.seed); drawAdapt(); }
+function drawAdapt() {
+  const Nad = PAPER.Nad, xs = range(0, 1, Nad), xt = range(0, 50, Nad);
   const pmax = Math.max(7, Math.ceil(Math.max(...run.Pc.slice(0, 20), ...run.Pg.slice(0, 20)) + 1));
-  chPow.set({ title: '輸出功率（Fig. 11、Fig. 12 上圖）', x: [0, Nad], y: [0, pmax], xTicks: xt, yTicks: range(0, 1, pmax), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3, cursor: cur,
+  const powCfg = (c, ys, name) => ({ title: name + ' 輸出功率', x: [0, Nad], y: [0, pmax], xTicks: xt, yTicks: range(0, 1, pmax), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3, h: 200, ml: 38,
     hlines: [{ y: S.Popt, cls: 'opt' }, { y: S.Popt * (1 + B.Mlo), cls: 'thr' }, { y: S.Popt * (1 + B.Mhi), cls: 'thr' }],
-    series: [{ name: '受限 LMS', c: 'c', xs, ys: run.Pc }, { name: '梯度投影法', c: 'fb', xs, ys: run.Pg, w: 1.5 },
-      { name: `最佳值 ${S.Popt.toFixed(2)}`, c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true },
-      { name: `最佳值 ×（1 + 失調量界）`, c: 'ink', xs: [], ys: [], w: 1, dash: true, legendOnly: true }] });
-  // the paper's two lower graphs: linear scale, CLMS up to 6e-11, GP up to 60e-11 (in units of 1e-11)
+    series: [{ tipName: name, c, xs, ys }] });
+  // the paper's lower graphs: linear scale, CLMS up to 6e-11 and GP up to 60e-11 (plotted in units of 1e-11)
   const u = 1e-11, ec = run.Ec.map(v => v / u), eg = run.Eg.map(v => v / u);
   const topC = Math.max(6, Math.ceil(Math.max(...ec))), topG = Math.max(60, Math.ceil(Math.max(...eg) / 10) * 10);
-  const errCfg = (top, step, c, ys, name) => ({ title: name, x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, step, top), xLabel: '更新次數 k', yLabel: '單位 10⁻¹¹', xName: 'k', cursor: cur, h: 210, ml: 38,
+  const errCfg = (top, c, ys, name) => ({ title: name + ' 約束誤差', x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, top / 6, top), xLabel: '更新次數 k', yLabel: '單位 10⁻¹¹', xName: 'k', h: 200, ml: 38,
     yTip: v => sci(v * u), series: [{ tipName: name, c, xs, ys }] });
-  chErrC.set(errCfg(topC, topC / 6, 'c', ec, '受限 LMS'));
-  chErrG.set(errCfg(topG, topG / 6, 'fb', eg, '梯度投影法'));
-  const kk = k == null ? Nad : k, tail = a => { const s = a.slice(Math.max(1, kk - 49), kk + 1); return s.reduce((x, y) => x + y, 0) / s.length; };
-  $('tbAdapt').innerHTML = `<tr><th>第 ${kk} 次更新</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影</th></tr>` +
-    `<tr><td>最近 50 次平均輸出功率</td><td>${tail(run.Pc).toFixed(3)}</td><td>${tail(run.Pg).toFixed(3)}</td></tr>` +
-    `<tr><td>論文的穩態範圍（式 27）</td><td colspan="2">${(S.Popt * (1 + B.Mlo)).toFixed(3)} – ${(S.Popt * (1 + B.Mhi)).toFixed(3)}</td></tr>` +
-    `<tr><td>約束誤差</td><td>${sci(run.Ec[kk])}</td><td>${sci(run.Eg[kk])}</td></tr>`;
-}
-function stop() { if (timer) { clearInterval(timer); timer = null; $('play').textContent = '播放收斂過程'; } state.k = null; }
-
-/* ---- geometry toggle (Fig. 6 / Fig. 8) ---- */
-const GEO_CAP = [
-  '約束平面 Λ：CᵀW = 𝓕；子空間 Σ：CᵀW = 0（過原點、與 Λ 平行）；F 垂直於 Λ，是 Λ 上離原點最近的點。① 走一步 −μ y(k) X(k)，離開 Λ；② 乘 P，正交投影到 Σ；③ 加 F 回到 Λ。②③都沿著法向量，所以 W(k+1) 正是 W′ 在 Λ 上的正交投影 PW′ + F。梯度投影法沒有③，只把投影後的梯度 −μPy(k)X(k) 加到 W(k)。',
-  'W(k) 因為捨入落在偏移平面 Λ + ε 上。受限 LMS 每步都做「投影再加 F」，不論 W(k) 偏了多少，W(k+1) 都回到 Λ，誤差只剩這一步的捨入。梯度投影法只加平行於 Λ 的增量 −μPy(k)X(k)，偏差 ε 原封不動留著，之後每步的捨入再疊上去，所以會累積（對照論文 Fig. 8）。'];
-function drawGeo() {
-  $('geo0').toggleAttribute('hidden', state.geo !== 0); $('geo1').toggleAttribute('hidden', state.geo !== 1);
-  document.querySelectorAll('[data-geo]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.geo === state.geo)));
-  $('geoCap').textContent = GEO_CAP[state.geo];
+  chPowC.set(powCfg('c', run.Pc, '受限 LMS')); chErrC.set(errCfg(topC, 'c', ec, '受限 LMS'));
+  chPowG.set(powCfg('fb', run.Pg, '梯度投影法')); chErrG.set(errCfg(topG, 'fb', eg, '梯度投影法'));
+  const tail = a => { const s = a.slice(Nad - 49); return s.reduce((x, y) => x + y, 0) / s.length; };
+  $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>Fig. 11</th><th><span class="sw b-fb"></span>Fig. 12</th></tr>` +
+    `<tr><td>最後 50 次平均輸出功率</td><td>${tail(run.Pc).toFixed(3)}</td><td>${tail(run.Pg).toFixed(3)}</td></tr>` +
+    `<tr><td>最佳值（實線）</td><td colspan="2">${S.Popt.toFixed(3)}</td></tr>` +
+    `<tr><td>失調量上下界（虛線）</td><td colspan="2">${(S.Popt * (1 + B.Mlo)).toFixed(3)} – ${(S.Popt * (1 + B.Mhi)).toFixed(3)}</td></tr>` +
+    `<tr><td>約束誤差</td><td>${sci(run.Ec[Nad])}</td><td>${sci(run.Eg[Nad])}</td></tr>`;
 }
 
 /* ---- wiring ---- */
-document.querySelectorAll('[data-geo]').forEach(b => b.addEventListener('click', () => { state.geo = +b.dataset.geo; drawGeo(); }));
-document.querySelectorAll('[data-psd]').forEach(b => b.addEventListener('click', () => { state.psdLin = b.dataset.psd === '1'; drawPsd(); }));
-$('th0').addEventListener('input', drawTaps);
-$('reseed').addEventListener('click', () => { stop(); state.seed = (state.seed * 1664525 + 1013904223) >>> 0; runAdapt(); });
-$('play').addEventListener('click', () => {
-  if (timer) { stop(); drawK(); return; }
-  state.k = 0; drawK(); $('play').textContent = '暫停';
-  timer = setInterval(() => { state.k += 2; if (state.k >= PAPER.Nad) { stop(); drawK(); } else drawK(); }, 50);
-});
+$('reseed').addEventListener('click', () => { state.seed = (state.seed * 1664525 + 1013904223) >>> 0; runAdapt(); });
 let rz = null;
 new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => charts.forEach(c => c.draw()), 80); }).observe(document.querySelector('.wrap'));
 
-drawTaps(); drawGeo(); drawSetup(); runAdapt();
+drawSetup(); runAdapt();
 </script>
 
 </body>

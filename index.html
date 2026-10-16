@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Frost (1972) 受限 LMS 演算法 MATLAB 復現程式的互動圖解：寬頻陣列、約束、最佳解、受限 LMS 與梯度投影法的誤差累積">
+<meta name="description" content="重現 Frost (1972) Sec. VII 的模擬：Table I、Fig. 9–12、特徵值、μ 上界與失調量，受限 LMS 與梯度投影法的約束誤差比較">
 <title>線性約束自適應陣列處理</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
 <style>
@@ -67,7 +67,6 @@ section{display:flex;flex-direction:column;gap:18px;min-width:0}
 .ctl output{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
 .ctl .row{display:flex;justify-content:space-between;gap:8px}
 input[type=range]{width:100%;accent-color:var(--accent);margin:0}
-input[type=number]{font:inherit;font-family:var(--mono);font-size:14px;width:72px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
 .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden;align-self:flex-start;max-width:100%}
 .seg button{white-space:nowrap;font:inherit;font-size:14px;padding:6px 14px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
@@ -83,7 +82,6 @@ summary{cursor:pointer;padding:9px 14px;font-size:14px;color:var(--ink2);font-we
 pre{margin:0;padding:12px 14px;border-top:1px solid var(--line);background:var(--code-bg);font-family:var(--mono);font-size:13px;line-height:1.6;overflow-x:auto;border-radius:0 0 6px 6px}
 pre .c{color:var(--muted)}
 .scroll{overflow-x:auto}
-.scroll svg{display:block;min-width:560px;width:100%;height:auto}
 /* charts */
 .chart{position:relative;min-width:0}
 .chart svg{display:block;touch-action:pan-y}
@@ -107,8 +105,9 @@ pre .c{color:var(--muted)}
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .tile{border:1px solid var(--line);border-radius:6px;padding:10px 12px;min-width:0}
-.tile .k{font-size:12.5px;color:var(--ink2);display:flex;align-items:center}
-.tile .v{font-family:var(--mono);font-size:26px;line-height:1.25;font-variant-numeric:tabular-nums}
+.tile .k{font-size:12.5px;color:var(--ink2)}
+.tile .v{font-family:var(--mono);font-size:clamp(20px,5.6vw,26px);line-height:1.3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile .v small{font-size:.62em}
 .tile .s{font-size:12.5px;color:var(--muted)}
 .ok{color:var(--good)} .ng{color:var(--bad)}
 /* tap grid */
@@ -124,10 +123,16 @@ th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--line);whit
 th:first-child,td:first-child{text-align:left;white-space:normal;min-width:9.5em}
 th{font-weight:500;color:var(--ink2);font-size:13px}
 td{font-family:var(--mono)} td:first-child{font-family:var(--body)}
-.try{display:flex;flex-direction:column;gap:6px;margin:0;padding-left:20px;font-size:15px;max-width:44em}
-.diagram text{font-family:var(--body);font-size:13px;fill:var(--ink2)}
-.diagram .mono{font-family:var(--mono);font-size:12px}
-.fvec{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-family:var(--mono);font-size:14px}
+.diagram{display:block;width:100%;max-width:660px;height:auto;margin:0 auto}
+.diagram text{font-family:var(--body);font-size:17px;fill:var(--ink2)}
+.sub-t{font-size:13px;color:var(--ink2);font-weight:500;margin-bottom:2px}
+.tbl-src th,.tbl-src td{text-align:center}
+.tbl-src th:first-child,.tbl-src td:first-child{text-align:left}
+.tbl-sum th,.tbl-sum td{text-align:left;white-space:normal}
+.tbl-sum td{font-family:var(--body)}
+td sup{font-size:.72em;line-height:0}
+#tbAdapt th{white-space:normal}
+@media (max-width:520px){th,td{padding:6px 6px}th:first-child,td:first-child{min-width:6.5em}.tile{padding:8px 10px}.diagram text{font-size:22px}.math{white-space:normal}}
 footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
 /* section nav */
 html{scroll-behavior:smooth}
@@ -135,19 +140,6 @@ section{scroll-margin-top:16px}
 .toc{display:flex;flex-wrap:wrap;gap:6px 8px;font-size:13.5px;margin-top:4px}
 .toc a{color:var(--ink2);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--surface);white-space:nowrap}
 .toc a:hover{border-color:var(--accent);color:var(--accent)}
-/* output-power breakdown bars */
-.dec{display:flex;flex-direction:column;gap:8px}
-.dec-row{display:grid;grid-template-columns:9.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:13px;color:var(--ink2)}
-.dec-bar{display:flex;height:22px;border-radius:4px;overflow:hidden;background:var(--code-bg)}
-.dec-bar span{display:block;height:100%;box-shadow:inset -1px 0 0 var(--surface)}
-.dec-v{font-family:var(--mono);text-align:right;color:var(--ink)}
-.sq{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-/* heatmaps */
-.hm{min-width:0;display:flex;flex-direction:column;gap:6px}
-.hm-t{font-size:13px;color:var(--ink2);font-weight:500}
-.hm canvas{display:block;width:100%;border-radius:4px}
-.cbar{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--muted)}
-.cbar-g{flex:0 1 280px;height:10px;border-radius:3px;background:linear-gradient(90deg,#440154,#3b528b,#21918c,#5ec962,#fde725)}
 </style>
 </head>
 <body>
@@ -184,9 +176,9 @@ section{scroll-margin-top:16px}
 </header>
 
 <section class="intro">
-  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁把復現程式的每個步驟改成可以動手調的圖，由上往下讀就是程式的執行順序。</p>
+  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁只重現論文 Sec. VII 做過的模擬：Table I 的設定、Fig. 9 與 Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11、Fig. 12 的受限 LMS 與梯度投影法。</p>
   <nav class="toc" aria-label="章節">
-    <a href="#sec-basic">寬頻陣列</a><a href="#sec-rxx">重建 R<sub>xx</sub></a><a href="#sec-opt">最佳解與 μ</a><a href="#sec-adapt">受限 LMS vs 梯度投影</a><a href="#sec-noise">雜訊去哪了</a><a href="#sec-mean">平均收斂</a><a href="#sec-ens">集成驗證</a><a href="#sec-sum">整理</a>
+    <a href="#sec-basic">寬頻陣列</a><a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
   </nav>
 </section>
 
@@ -199,7 +191,7 @@ section{scroll-margin-top:16px}
       <dl>
         <dt>問題</dt><dd>論文只印出 Table I 的功率、方向、頻寬，要重建出特徵值 0.111–8.355 的相關矩陣。</dd>
         <dt>解法</dt><dd>相關函數在 25τ 外為零，用三角窗乘上帶通相關；感測器與抽頭的延遲照幾何算。</dd>
-        <dt>看什麼</dt><dd>功率頻譜、R<sub>xx</sub> 特徵值、看向方向響應、W<sub>opt</sub>。</dd>
+        <dt>對照</dt><dd>Table I、Fig. 9、Fig. 10，特徵值範圍、式 (26) 的 μ 上界、式 (27) 的失調量。</dd>
       </dl>
     </div>
     <div class="brief">
@@ -209,11 +201,11 @@ section{scroll-margin-top:16px}
       <dl>
         <dt>問題</dt><dd>不知道 R<sub>xx</sub>，只能用每一步的輸入與輸出更新權重，還要讓約束永遠成立。</dd>
         <dt>解法</dt><dd>走一步、投影到約束子空間、再加回 F；對照只投影不加 F 的梯度投影法。</dd>
-        <dt>看什麼</dt><dd>輸出功率收斂、約束誤差累積、平均權重的幾何收斂。</dd>
+        <dt>對照</dt><dd>Fig. 11、Fig. 12：6 位有效數字、μ = 0.01、200 次更新。</dd>
       </dl>
     </div>
   </div>
-  <p class="note">本頁用 JavaScript 重新實作程式的運算。亂數產生器與 MATLAB 的 <code>rng(2026)</code> 不同，而且迭代這裡用的是直接由 R<sub>xx</sub> 抽出的獨立高斯快照（MATLAB 的 <code>frost1972_run.m</code> 單次模擬用的是實際產生的波形），所以曲線的細節會和 MATLAB 跑出來的不同，數值與結論一致。</p>
+  <p class="note">本頁用 JavaScript 重新實作程式的運算。亂數產生器與 MATLAB 的 <code>rng(2026)</code> 不同，而且迭代這裡用的是直接由 R<sub>xx</sub> 抽出的獨立高斯快照（論文假設相鄰兩次更新的間隔大於 58τ，快照彼此不相關），所以曲線的細節會和 MATLAB 跑出來的不同，數值與結論一致。</p>
 </section>
 
 <section id="sec-basic">
@@ -242,29 +234,28 @@ S.F = S.C*((S.C'*S.C)\S.Fvec);            <span class="c">% 式 (20a)，也是 W
 
 <section id="sec-rxx">
   <div class="part"><div class="step">程式一 · SETUP</div></div>
-  <h2>從 Table I 重建 R<sub>xx</sub></h2>
-  <p>論文的模擬有三個點源：看向方向的訊號（功率 0.1、0°、中心頻率 0.3、頻寬 0.1）、雜訊 A（1.0、45°、0.2、0.05）、雜訊 B（1.0、60°、0.4、0.07），每個抽頭再加 0.1 的白雜訊；頻率以 1/τ 為 1。論文說所有時間相關在時差大於 25τ 時恰為零，程式用一個 25τ 的三角窗乘上帶通相關來實現這一點：</p>
+  <h2>Table I 的環境與 Fig. 10 的頻譜</h2>
+  <p>論文的模擬有三個點源與每個抽頭上的白雜訊。頻率以抽頭間隔定義：f = 1.0 對應 1/τ，所以看向方向的折疊頻率是 0.5。</p>
+  <div class="scroll"><table class="tbl-src">
+    <tr><th>Table I</th><th>功率</th><th>方向</th><th>中心頻率</th><th>頻寬</th></tr>
+    <tr><td><span class="sw b-c"></span>看向方向訊號</td><td>0.1</td><td>0°</td><td>0.3</td><td>0.1</td></tr>
+    <tr><td><span class="sw b-f"></span>雜訊 A</td><td>1.0</td><td>45°</td><td>0.2</td><td>0.05</td></tr>
+    <tr><td><span class="sw b-fb"></span>雜訊 B</td><td>1.0</td><td>60°</td><td>0.4</td><td>0.07</td></tr>
+    <tr><td><span class="sw b-raw"></span>白雜訊（每個抽頭）</td><td>0.1</td><td>—</td><td>—</td><td>—</td></tr>
+  </table></div>
+  <p>論文說所有時間相關在時差大於 25τ 時恰為零，但沒有給相關函數的形式。程式用一個 25τ 的三角窗乘上帶通相關來實現這一點：</p>
   <div class="math"><i>r</i>(<i>t</i>) = <i>P</i> · (1 − |<i>t</i>|/25) · sinc(<i>B t</i>) · cos(2π <i>f<sub>c</sub> t</i>)，　|<i>t</i>| ≤ 25τ</div>
   <p>三角窗、sinc 與餘弦各自都是合法的相關函數，乘積仍是合法的相關函數，所以 R<sub>xx</sub> 保證正定。抽頭 a 與抽頭 b 的相關就是 r 在它們延遲差上的值，三個源相加，再在對角線加上白雜訊。</p>
   <div class="panel">
-    <h3>模型參數</h3>
-    <div class="controls">
-      <div class="ctl" style="flex:1 1 300px"><span>相關函數的時間支持</span>
-        <div class="seg" data-seg><button type="button" data-win="1">三角窗 25τ（論文）</button><button type="button" data-win="0">無窗（無限長）</button></div></div>
-      <div class="ctl" style="flex:1 1 220px"><span>頻譜縱軸</span>
-        <div class="seg" data-seg><button type="button" data-psd="0">dB</button><button type="button" data-psd="1">線性（同 Fig. 10）</button></div></div>
-      <label class="ctl" for="pw"><span class="row"><span>每抽頭白雜訊功率</span><output id="pwo"></output></span>
-        <input type="range" id="pw" min="0.01" max="0.5" step="0.01" value="0.1"></label>
-      <button type="button" class="btn" id="resetM">回到論文設定</button>
-    </div>
+    <h3>入射訊號的功率頻譜（對照論文 Fig. 10）</h3>
+    <div class="seg" data-seg><button type="button" data-psd="1">線性（同 Fig. 10）</button><button type="button" data-psd="0">dB</button></div>
     <div id="chPsd"></div>
-    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，比兩個雜訊源低 10 dB、和白雜訊同一個量級，所以用對數刻度才看得到它；切到線性刻度就是論文 Fig. 10 的畫法，訊號幾乎貼在橫軸上。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 畫出來的形狀一致。</p>
+    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，在論文的線性刻度下幾乎貼在橫軸上；切到 dB 才看得出它的頻帶落在 0.25–0.35。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 的形狀一致。</p>
   </div>
   <div class="panel">
-    <h3>R<sub>xx</sub> 的特徵值</h3>
+    <h3>R<sub>xx</sub> 的特徵值範圍</h3>
     <div class="tiles" id="tilesR"></div>
-    <div id="chEig"></div>
-    <p class="cap">16 個特徵值由小到大。論文印的是 0.111 到 8.355：用三角窗時兩端都對上了；拿掉窗，最小值掉回白雜訊功率 0.100，最大值也偏離，所以「相關在 25τ 外為零」這句話是重建模型的關鍵。PR<sub>xx</sub>P 恰有 J = 4 個零特徵值，其餘介於 λ<sub>min</sub> 與 λ<sub>max</sub> 之間。</p>
+    <p class="cap">論文：「the eigenvalues of R<sub>xx</sub> ranged from 0.111 to 8.355」。用上面的模型重建，兩端都對上了，這也是相關函數形式可以採用三角窗模型的依據。</p>
   </div>
   <details><summary>對照程式：相關函數與 R<sub>xx</sub></summary>
 <pre>function r = frost1972_acf(t, fc, B, Tc)
@@ -284,32 +275,21 @@ S.lambda = sort(eig(S.Rxx));                <span class="c">% 0.1110 ... 8.3556<
 
 <section id="sec-opt">
   <div class="step">程式一 · 最佳解</div>
-  <h2>約束鎖住的響應，與它能到的最低功率</h2>
-  <p>看向方向的頻率響應只由向量 𝓕 = [f<sub>1</sub> … f<sub>J</sub>]<sup>T</sup> 決定，論文取 [1, −2, 1.5, 2]。把約束用拉格朗日乘數併入成本函數，梯度為零、代回約束，就得到最佳受限權重和它的輸出功率：</p>
-  <div class="math"><i>W</i><sub>opt</sub> = <i>R</i><sup>−1</sup><i>C</i> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕 ，　E[<i>y</i><sub>opt</sub>²] = 𝓕<sup>T</sup> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕</div>
+  <h2>Fig. 9 的看向方向響應，與 μ = 0.01 的性能界</h2>
+  <p>看向方向的頻率響應只由向量 𝓕 = [f<sub>1</sub> … f<sub>J</sub>]<sup>T</sup> 決定，論文取 𝓕<sup>T</sup> = [1, −2, 1.5, 2]。把約束用拉格朗日乘數併入成本函數，梯度為零、代回約束，就得到最佳受限權重和它的輸出功率：</p>
+  <div class="math"><i>W</i><sub>opt</sub> = <i>R</i><sup>−1</sup><i>C</i> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕 ，　E[<i>y</i><sub>opt</sub><sup>2</sup>] = 𝓕<sup>T</sup> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕</div>
   <div class="panel">
-    <h3>看向方向濾波器 𝓕</h3>
-    <div class="fvec">𝓕<sup>T</sup> = [
-      <input type="number" id="f1" step="0.5" value="1"> ,
-      <input type="number" id="f2" step="0.5" value="-2"> ,
-      <input type="number" id="f3" step="0.5" value="1.5"> ,
-      <input type="number" id="f4" step="0.5" value="2"> ]
-      <button type="button" class="btn" id="resetF">回到論文的 [1, −2, 1.5, 2]</button>
-    </div>
+    <h3>看向方向的頻率響應（對照論文 Fig. 9）</h3>
     <div id="chResp"></div>
-    <p class="cap">|H(f)|² = |Σ<sub>j</sub> f<sub>j</sub> e<sup>−i2πf(j−1)</sup>|²，對照論文 Fig. 9。這條曲線不管權重怎麼調都不會變，因為每一直行的和被約束固定了。</p>
+    <p class="cap">|H(f)|<sup>2</sup> = |Σ<sub>j</sub> f<sub>j</sub> e<sup>−i2πf(j−1)</sup>|<sup>2</sup>，𝓕<sup>T</sup> = [1, −2, 1.5, 2]。這條曲線不管權重怎麼調都不會變，因為每一直行權重的和被約束固定了；它的峰值落在 f ≈ 0.32，正好蓋住訊號的頻帶。</p>
   </div>
   <div class="panel">
-    <h3>最佳解與性能界</h3>
-    <div class="controls">
-      <label class="ctl" for="mu0"><span class="row"><span>收斂常數 μ</span><output id="mu0o"></output></span>
-        <input type="range" id="mu0" min="0.002" max="0.05" step="0.001" value="0.01"></label>
-    </div>
+    <h3>論文 Sec. VII 的數字（μ = 0.01）</h3>
     <div class="tiles" id="tilesOpt"></div>
-    <p class="cap">初始權重 F = C(C<sup>T</sup>C)<sup>−1</sup>𝓕 只滿足約束、不壓雜訊，所以它的輸出功率最高；最佳解把雜訊壓到底。失調量是穩態輸出功率超出最佳值的比例，由式 (27) 給上下界；μ 愈小失調量愈小，但最慢模式的時間常數 1/(μσ<sub>min</sub>) 愈長。論文：μ = 0.01 時 15.2–17.0 %。</p>
-    <p class="cap">μ 有兩個不同的上界。平均權重 E[W(k)] 只要 μ &lt; 2/σ<sub>max</sub> 就收斂；論文寫的 1/σ<sub>max</sub> 是讓誤差被兩條遞減等比數列夾住的充分條件，不是發散門檻。權重的變異（也就是輸出功率）要 μ 小於式 (26) 才保證收斂，這個界小得多。在這個模型上用 100 次獨立模擬實測：μ = 0.047 時穩態平均輸出功率已是最佳值的 9 倍，μ = 0.05 時約 23 倍，μ ≥ 0.055 就發散，所以式 (26) 的 0.047 幾乎就是均方失穩的邊緣。論文說式 (26) 算出 0.074，但代入它自己的數字只得到 0.047；0.074 恰好等於 2/tr(PR<sub>xx</sub>P)，也就是式 (26) 的分母少了 σ<sub>max</sub>，推測是原文計算時漏掉了這一項。論文實際用的 μ = 0.01 遠小於兩者，不影響結論。</p>
+    <p class="cap">處理器從 W(0) = F = C(C<sup>T</sup>C)<sup>−1</sup>𝓕 開始：它只滿足約束、不壓雜訊，所以輸出功率最高；最佳解把雜訊壓到底。失調量是穩態輸出功率超出最佳值的比例，論文用式 (27) 算出 μ = 0.01 時介於 15.2 % 與 17.0 %，這兩個界就是 Fig. 11 上圖裡靠得很近的兩條水平線。</p>
+    <p class="cap">唯一對不上的是式 (26)：論文說算出來的 μ 上界是 0.074，但代入它自己的模型只得到 0.047。0.074 恰好等於 2/tr(PR<sub>xx</sub>P)，也就是式 (26) 的分母少了 σ<sub>max</sub>，推測是原文計算時漏掉了這一項。論文實際用的 μ = 0.01 遠小於兩者，不影響結論。</p>
   </div>
-  <details><summary>對照程式：W<sub>opt</sub> 與式 (25)–(28)</summary>
+  <details><summary>對照程式：W<sub>opt</sub> 與式 (26)、(27)</summary>
 <pre>RiC    = S.Rxx \ S.C;
 S.Wopt = RiC * ((S.C'*RiC) \ S.Fvec);           <span class="c">% 式 (16)</span>
 S.Popt = S.Fvec' * ((S.C'*RiC) \ S.Fvec);       <span class="c">% 最佳輸出功率 2.4954</span>
@@ -317,20 +297,19 @@ S.Popt = S.Fvec' * ((S.C'*RiC) \ S.Fvec);       <span class="c">% 最佳輸出�
 PRP      = S.P*S.Rxx*S.P;
 S.sigma  = sort(eig(PRP)); S.sigma = S.sigma(S.J+1:end);   <span class="c">% 去掉 J 個零特徵值</span>
 S.mu_max26 = 1/(max(S.sigma) + 0.5*trace(PRP));           <span class="c">% 式 (26)</span>
-S.mu_max28 = 2/(3*trace(S.Rxx));                           <span class="c">% 式 (28)</span>
 S.M_lo = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*min(S.sigma)));  <span class="c">% 式 (27)</span>
 S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></details>
 </section>
 
 <section id="sec-adapt">
   <div class="part"><div class="step">程式二 · ADAPT</div></div>
-  <h2>走一步、投影、加回 F</h2>
+  <h2>Fig. 11、Fig. 12：受限 LMS 與梯度投影法</h2>
   <p>實際上 R<sub>xx</sub> 不知道，演算法只能用當下的抽頭電壓 X(k) 與輸出 y(k)。Frost 把未知的 R<sub>xx</sub>W 換成瞬時估計 X(k)y(k)，再讓每一步都回到約束平面：</p>
   <div class="math">受限 LMS　<i>W</i>(<i>k</i>+1) = <i>P</i> [ <i>W</i>(<i>k</i>) − μ <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>) ] + <i>F</i> ，　<i>W</i>(0) = <i>F</i></div>
   <div class="math">梯度投影法　<i>W</i>(<i>k</i>+1) = <i>W</i>(<i>k</i>) − μ <i>P</i> <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>)</div>
   <div class="panel">
     <div class="seg" data-seg><button type="button" data-geo="0">W(k) 在 Λ 上（Fig. 6）</button><button type="button" data-geo="1">W(k) 已因捨入偏離 Λ（Fig. 8）</button></div>
-    <div class="scroll"><svg class="diagram" viewBox="0 0 620 220" role="img" aria-label="受限 LMS 更新的幾何：梯度步離開約束平面，正交投影到子空間，再加 F 回到平面；W(k) 偏離約束平面時，受限 LMS 回到平面，梯度投影法沿偏移平面前進">
+    <svg class="diagram" viewBox="20 6 590 204" role="img" aria-label="受限 LMS 更新的幾何：梯度步離開約束平面，正交投影到子空間，再加 F 回到平面；W(k) 偏離約束平面時，受限 LMS 回到平面，梯度投影法沿偏移平面前進">
       <defs>
         <marker id="ah-raw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-raw)"/></marker>
         <marker id="ah-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-f)"/></marker>
@@ -338,76 +317,64 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
         <marker id="ah-fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--s-fb)"/></marker>
       </defs>
       <line x1="60" y1="180" x2="580" y2="60" stroke="var(--ink)" stroke-width="2"/>
-      <text x="440" y="112">約束平面 Λ　CᵀW = 𝓕</text>
+      <text x="452" y="114">約束平面 Λ</text>
       <line x1="30" y1="120" x2="470" y2="18" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="6 4"/>
-      <text x="150" y="60" class="mono">子空間 Σ　CᵀW = 0</text>
+      <text x="128" y="62">子空間 Σ</text>
       <line x1="96" y1="105" x2="110.6" y2="168.3" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>
-      <circle cx="96" cy="105" r="3.5" fill="var(--muted)"/><text x="62" y="98">原點</text>
-      <circle cx="110.6" cy="168.3" r="5" fill="var(--accent)"/><text x="122" y="196">F（⊥ Λ，Λ 上最短）</text>
+      <circle cx="96" cy="105" r="3.5" fill="var(--muted)"/><text x="50" y="100">原點</text>
+      <circle cx="110.6" cy="168.3" r="5" fill="var(--accent)"/><text x="124" y="200">F</text>
       <g id="geo0">
-        <circle cx="270" cy="131.5" r="5" fill="var(--ink)"/><text x="244" y="158">W(k)</text>
+        <circle cx="270" cy="131.5" r="5" fill="var(--ink)"/><text x="240" y="162">W(k)</text>
         <line x1="270" y1="131.5" x2="368" y2="72.4" stroke="var(--s-raw)" stroke-width="2" marker-end="url(#ah-raw)"/>
-        <text x="300" y="96">①</text>
-        <circle cx="372" cy="70" r="4" fill="var(--s-raw)"/><text x="384" y="74">W′</text>
+        <text x="298" y="94">①</text>
+        <circle cx="372" cy="70" r="4" fill="var(--s-raw)"/><text x="384" y="76">W′</text>
         <line x1="372" y1="70" x2="366.6" y2="46.7" stroke="var(--s-f)" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#ah-f)"/>
-        <text x="346" y="64">②</text>
-        <circle cx="365.7" cy="42.8" r="4" fill="var(--s-f)"/><text x="312" y="34" class="mono">P[W′]</text>
+        <text x="342" y="64">②</text>
+        <circle cx="365.7" cy="42.8" r="4" fill="var(--s-f)"/><text x="316" y="32">P[W′]</text>
         <line x1="365.7" y1="42.8" x2="379.4" y2="102.2" stroke="var(--s-c)" stroke-width="2" marker-end="url(#ah-c)"/>
-        <text x="386" y="96">③</text>
-        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="386" y="132">W(k+1)</text>
+        <text x="388" y="100">③</text>
+        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="384" y="138">W(k+1)</text>
       </g>
       <g id="geo1" hidden>
         <line x1="60" y1="161.5" x2="580" y2="41.5" stroke="var(--s-fb)" stroke-width="1.5" stroke-dasharray="6 4"/>
-        <text x="440" y="40" style="fill:var(--s-fb)">偏移平面 Λ + ε</text>
-        <circle cx="266" cy="114" r="5" fill="var(--ink)"/><text x="216" y="104">W(k)</text>
+        <text x="470" y="40" style="fill:var(--s-fb)">Λ + ε</text>
+        <circle cx="266" cy="114" r="5" fill="var(--ink)"/><text x="206" y="106">W(k)</text>
         <line x1="266" y1="114" x2="364" y2="54.9" stroke="var(--s-raw)" stroke-width="2" marker-end="url(#ah-raw)"/>
-        <circle cx="368" cy="52.5" r="4" fill="var(--s-raw)"/><text x="330" y="44">W′</text>
+        <circle cx="368" cy="52.5" r="4" fill="var(--s-raw)"/><text x="330" y="42">W′</text>
         <line x1="368" y1="52.5" x2="379.4" y2="102.2" stroke="var(--s-c)" stroke-width="2" marker-end="url(#ah-c)"/>
-        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="386" y="132" style="fill:var(--s-c)">受限 LMS：回到 Λ</text>
+        <circle cx="380.3" cy="106.1" r="5" fill="var(--s-c)"/><text x="390" y="134" style="fill:var(--s-c)">受限 LMS</text>
         <line x1="266" y1="114" x2="372.3" y2="89.4" stroke="var(--s-fb)" stroke-width="2" marker-end="url(#ah-fb)"/>
-        <circle cx="376.3" cy="88.5" r="5" fill="var(--s-fb)"/><text x="240" y="172" style="fill:var(--s-fb)">梯度投影法：停在 Λ + ε</text>
+        <circle cx="376.3" cy="88.5" r="5" fill="var(--s-fb)"/><text x="210" y="176" style="fill:var(--s-fb)">梯度投影法</text>
       </g>
-    </svg></div>
+    </svg>
     <p class="cap" id="geoCap"></p>
   </div>
 
   <div class="panel">
-    <h3>模擬控制</h3>
+    <h3>論文的模擬設定</h3>
+    <p class="cap">6 位有效數字的浮點算術（HP-2116）、μ = 0.01、W(0) = F、200 次更新；兩種演算法吃完全相同的一組資料，和論文一樣。</p>
     <div class="controls">
-      <label class="ctl" for="mu1"><span class="row"><span>收斂常數 μ</span><output id="mu1o"></output></span>
-        <input type="range" id="mu1" min="0.002" max="0.05" step="0.001" value="0.01"></label>
-      <div class="ctl" style="flex:1 1 320px"><span>算術精度（有效數字）</span>
-        <div class="seg" data-seg><button type="button" data-dig="6">6 位（HP-2116）</button><button type="button" data-dig="4">4 位</button><button type="button" data-dig="0">雙精度</button></div></div>
-      <label class="ctl" for="nad"><span class="row"><span>更新次數 N</span><output id="nado"></output></span>
-        <input type="range" id="nad" min="200" max="2000" step="100" value="200"></label>
-      <label class="ctl" for="kcur" style="flex:2 1 220px"><span class="row"><span>已更新次數 k</span><output id="kcuro"></output></span>
-        <input type="range" id="kcur" min="0" max="200" step="1" value="200"></label>
       <button type="button" class="btn" id="play">播放收斂過程</button>
-      <button type="button" class="btn" id="reseed">重新抽樣</button>
-      <button type="button" class="btn" id="resetA">回到論文設定</button>
+      <button type="button" class="btn" id="reseed">換一組資料重跑</button>
     </div>
   </div>
 
   <div class="panel">
-    <h3>輸出功率 W<sup>T</sup>(k) R<sub>xx</sub> W(k)（對照論文 Fig. 11、Fig. 12 上圖）</h3>
+    <h3>輸出功率（對照 Fig. 11、Fig. 12 上圖）</h3>
     <div id="chPow"></div>
-    <p class="cap">兩種演算法吃完全相同的一組快照。實線是最佳輸出功率，兩條虛線是最佳值加上式 (27) 的失調量上下界。輸出功率從 W(0) = F 的值一路往下掉，穩態在界附近抖動；兩條曲線幾乎重合，因為梯度投影法的誤差還沒把約束平面推離原點多遠。</p>
+    <p class="cap">和論文一樣有三條水平線：實線是最佳輸出功率，兩條虛線是最佳值加上式 (27) 的失調量上下界。輸出功率從 W(0) = F 的值一路往下掉，穩態在界附近抖動；兩種演算法的曲線幾乎重合，因為 200 次內梯度投影法累積的誤差還很小（論文 Sec. VII 最後一段）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。</p>
   </div>
   <div class="panel">
-    <h3>約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖²（對照 Fig. 11、Fig. 12 下圖，對數刻度）</h3>
-    <div class="seg" data-seg><button type="button" data-elin="0">對數刻度</button><button type="button" data-elin="1">線性刻度（同論文 Fig. 12，上限 60×10⁻¹¹）</button></div>
-    <div id="chErr"></div>
+    <h3>約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup>（對照 Fig. 11、Fig. 12 下圖）</h3>
+    <div class="two">
+      <div><div class="sub-t"><span class="sw b-c"></span>受限 LMS（Fig. 11 刻度）</div><div id="chErrC"></div></div>
+      <div><div class="sub-t"><span class="sw b-fb"></span>梯度投影法（Fig. 12 刻度，放大 10 倍）</div><div id="chErrG"></div></div>
+    </div>
     <div class="scroll"><table id="tbAdapt"></table></div>
-    <p class="cap">誤差恰為零的點畫在圖的底線上。雙精度下受限 LMS 的約束誤差是 10<sup>−30</sup> 等級，梯度投影法的誤差也只能從捨入慢慢長出來，所以要看出差別就得像論文一樣用短位數的算術。6 位有效數字時，受限 LMS 停在 10<sup>−12</sup> 附近不動，梯度投影法像隨機漫步一樣往上爬。切到線性刻度就是論文的畫法：受限 LMS 的誤差貼在零上，根本看不見，這就是 Fig. 12 圖說「Note scale」要強調的事。</p>
+    <p class="cap">論文兩張下圖的縱軸差了 10 倍（6×10<sup>−11</sup> 與 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，一步步累積，像隨機漫步一樣離開約束平面。</p>
   </div>
-  <ul class="try">
-    <li>按「播放收斂過程」，輸出功率在大約 30 次更新內掉到界附近；下方的約束誤差，橘線在 6 位數算術下從第一步就開始累積。</li>
-    <li>把 N 拉到 2000：梯度投影法的誤差比起頭大上幾個數量級，受限 LMS 仍然是一條平的。這就是論文「可以無限期運行」的意思。</li>
-    <li>把 μ 調大：收斂變快、穩態抖動變大，失調量的界也跟著往上；拉到 0.05（超過式 (26) 的 0.047）時，式 (27) 的上界失效，輸出功率偶爾會衝到很高；再大一點（約 0.055）就會發散，所以滑桿停在 0.05。</li>
-    <li>切到「4 位」：捨入誤差放大一萬倍，梯度投影法的偏差很快就看得見，受限 LMS 仍每一步被拉回來。</li>
-  </ul>
   <details><summary>對照程式：受限 LMS 與梯度投影法的主迴圈</summary>
-<pre>W = q(S.F);                              <span class="c">% W(0) = F；q() 把每個值四捨五入到 6 位有效數字</span>
+<pre>W = q(S.F);                              <span class="c">% W(0) = F；q() 把每個值捨入到 6 位有效數字</span>
 for k = 1:Nsnap
     x    = X(:, k);
     y(k) = q(W' * x);                    <span class="c">% 陣列輸出</span>
@@ -425,95 +392,21 @@ E        = S.C' * Wh - S.Fvec;
 out.cerr = sum(E.^2, 1);                 <span class="c">% 約束誤差 ‖CᵀW − 𝓕‖²</span></pre></details>
 </section>
 
-<section id="sec-noise">
-  <div class="step">程式二 · 結果</div>
-  <h2>雜訊去哪了：把輸出功率拆開來看</h2>
-  <p>論文只畫了總輸出功率。它從 W(0) = F 的值掉到接近最佳值，但光看總功率，看不出訊號有沒有被保住、被壓掉的又是哪一個雜訊。三個點源彼此不相關，白雜訊在各抽頭之間也獨立，所以輸出功率剛好可以拆成四項相加：</p>
-  <div class="math"><i>W</i><sup>T</sup><i>R</i><sub>xx</sub><i>W</i> = <i>W</i><sup>T</sup><i>R</i><sub>訊號</sub><i>W</i> + <i>W</i><sup>T</sup><i>R</i><sub>A</sub><i>W</i> + <i>W</i><sup>T</sup><i>R</i><sub>B</sub><i>W</i> + σ<sub>w</sub>² ‖<i>W</i>‖²</div>
-  <div class="panel">
-    <h3>各來源的輸出功率（中間一列跟隨上方「已更新次數 k」）</h3>
-    <div class="legend"><span><span class="sq b-c"></span>看向方向訊號</span><span><span class="sq b-f"></span>雜訊 A（45°）</span><span><span class="sq b-fb"></span>雜訊 B（60°）</span><span><span class="sq b-raw"></span>白雜訊 σ<sub>w</sub>²‖W‖²</span></div>
-    <div class="dec" id="chDec"></div>
-    <div class="scroll"><table id="tbDec"></table></div>
-    <p class="cap">訊號那一段在三列都一樣長：約束鎖住了看向方向的響應，演算法碰不到它。被壓下去的是兩個方向性雜訊（論文設定下 A 約降 13 dB、B 約降 10 dB），輸出 SNR 因此提高約 8 dB。白雜訊反而變大：要在 45° 與 60° 挖出零點，權重必須拉大（‖W‖² 從 2.81 變成 4.01），而白雜訊的輸出功率正比於 ‖W‖²。這是形成零點的代價，也是後來的強健波束成形要加對角載入（diagonal loading）來限制 ‖W‖² 的原因。</p>
-  </div>
-  <div class="panel">
-    <h3>空間-頻率響應 |H(f, θ)|²：零點落在哪裡</h3>
-    <div class="seg" data-seg><button type="button" data-cmp="opt">右圖：W<sub>opt</sub></button><button type="button" data-cmp="k">右圖：受限 LMS 第 k 次</button></div>
-    <div class="two">
-      <div class="hm"><div class="hm-t">W(0) = F（適應前，只滿足約束）</div><canvas id="hm0" role="img" aria-label="適應前的空間-頻率響應熱圖"></canvas></div>
-      <div class="hm"><div class="hm-t" id="hmT1"></div><canvas id="hm1" role="img" aria-label="適應後的空間-頻率響應熱圖"></canvas></div>
-    </div>
-    <div class="cbar"><span>−40 dB</span><div class="cbar-g"></div><span>+20 dB</span></div>
-    <p class="cap">橫軸是入射角 θ，縱軸是頻率 f（1.0 = 1/τ），白色虛線框是三個源的方向與頻帶。θ = 0° 那一直行在兩張圖完全一樣，因為約束把它鎖住了。適應前 A、B 兩個框落在亮區（響應 0 到 +5 dB）；適應後兩個框內變暗，零點沿著頻帶展開，而不是只在單一頻率。寬頻干擾需要「一段頻帶內、固定角度」都被壓低，這就是每個感測器後面要接抽頭延遲線的原因。</p>
-  </div>
-</section>
-
-<section id="sec-mean">
-  <div class="step">程式二 · 收斂</div>
-  <h2>平均權重以幾何級數靠近最佳解</h2>
-  <p>把更新式取期望，再減掉 W<sub>opt</sub>，差向量 V(k) = E[W(k)] − W<sub>opt</sub> 每一步乘上 I − μPR<sub>xx</sub>P。沿著 PR<sub>xx</sub>P 的每個特徵向量，收斂都是比值 (1 − μσ<sub>i</sub>) 的幾何級數，所以整體被夾在最快與最慢兩條幾何曲線之間：</p>
-  <div class="math">(1 − μσ<sub>max</sub>)<sup><i>k</i></sup> ‖<i>V</i>(0)‖ ≤ ‖<i>V</i>(<i>k</i>)‖ ≤ (1 − μσ<sub>min</sub>)<sup><i>k</i></sup> ‖<i>V</i>(0)‖</div>
-  <div class="panel">
-    <div class="controls">
-      <label class="ctl" for="nrun"><span class="row"><span>平均的獨立模擬次數</span><output id="nruno"></output></span>
-        <input type="range" id="nrun" min="10" max="200" step="10" value="60"></label>
-      <div class="ctl" style="flex:2 1 220px"><span>μ 跟隨上方「模擬控制」的設定</span><output id="mu2o"></output></div>
-    </div>
-    <div id="chMean"></div>
-    <p class="cap">青綠線是 ‖E[W(k)] − W<sub>opt</sub>‖ 除以初始距離，用獨立模擬的樣本平均估計；兩條虛線是理論上的快慢界。初始差向量主要落在大特徵值的方向上，所以一開始掉得快，之後被最慢的模式（時間常數約 1/(μσ<sub>min</sub>) ≈ 900 次）拖住。</p>
-  </div>
-  <details><summary>對照程式：驗證式 (24)</summary>
-<pre>L = chol(S.Rxx, 'lower');
-for n = 1:Nrun
-    Xn = L*randn(S.N, Nit);                      <span class="c">% 獨立高斯快照</span>
-    rr = frost1972_adapt(S, Xn, S.mu, 'clms', []);
-    Wmean = Wmean + rr.W/Nrun;
-end
-PRP = S.P*S.Rxx*S.P; Vpred = zeros(S.N, Nit+1); Vpred(:,1) = S.F - S.Wopt;
-for k = 1:Nit, Vpred(:,k+1) = Vpred(:,k) - S.mu*PRP*Vpred(:,k); end      <span class="c">% 式 (24)</span>
-errpred = max(sqrt(sum((Wmean - S.Wopt - Vpred).^2, 1)))/dev0;
-check(errpred < 0.05, 'ensemble mean E[W(k)] follows eq. (24) ...', errpred);</pre></details>
-</section>
-
-<section id="sec-ens">
-  <div class="step">程式二 · 集成驗證</div>
-  <h2>把論文的兩個定量說法拿來檢驗</h2>
-  <p>單次模擬只能看出「趨勢像」。下面兩個實驗用多次獨立模擬的平均，直接檢驗 Sec. IV 的失調量公式 (27)，以及 Sec. VI「梯度投影法的偏差像隨機漫步，期望平方距離隨更新次數線性成長」這句話。兩者固定使用論文設定（三角窗模型、白雜訊 0.1、𝓕 = [1, −2, 1.5, 2]），不受上面的控制項影響；頁面載入後會在背景計算。</p>
-  <div class="panel">
-    <h3>穩態失調量：實測與式 (27) 的上下界</h3>
-    <div class="controls"><button type="button" class="btn" id="runMis">重新計算</button><span class="status" id="misSt"></span></div>
-    <div id="chMis"></div>
-    <div class="scroll"><table id="tbMis"></table></div>
-    <p class="cap">每個 μ 跑 40 次獨立模擬（雙精度），先跑過暫態（max(1500, 12/μ) 次），再對之後 3000 次更新的輸出功率 W<sup>T</sup>R<sub>xx</sub>W 取平均，換算成失調量 M = 平均輸出功率 / 最佳輸出功率 − 1。論文只在 μ = 0.01 給了一組界；這裡把 μ 掃過一段範圍。小 μ 時上下界幾乎重合（μ = 0.0025 時只差 0.07 個百分點），所以用「實測 ± 2 個標準誤是否和界重疊」來判斷；μ 愈大，實測愈貼近上界。</p>
-  </div>
-  <div class="panel">
-    <h3>約束誤差的集成平均：梯度投影法真的是隨機漫步嗎</h3>
-    <div class="controls">
-      <div class="ctl" style="flex:3 1 340px"><span>6 位數的捨入規則</span>
-        <div class="seg" data-seg><button type="button" data-rnd="even">四捨六入五成雙（無偏）</button><button type="button" data-rnd="away">四捨五入（同 MATLAB round）</button><button type="button" data-rnd="trunc">截斷（無條件捨去）</button></div></div>
-      <button type="button" class="btn" id="runEns">重新計算</button><span class="status" id="ensSt"></span></div>
-    <div id="chEns"></div>
-    <div class="scroll"><table id="tbEns"></table></div>
-    <p class="cap" id="ensCap">40 次獨立模擬、6 位有效數字、μ = 0.01，兩種演算法吃同一組快照；為了看清楚，每一段對數區間內的點先取平均。隨機漫步的期望平方距離與 k 成正比，在 log–log 圖上是斜率 1 的直線（灰色虛線）。</p>
-  </div>
-</section>
-
 <section id="sec-sum">
   <div class="step">整理</div>
-  <h2>約束解決什麼，又沒解決什麼</h2>
-  <div class="scroll"><table>
-    <tr><th>項目</th><th style="text-align:left"><span class="sw b-c"></span>受限 LMS（式 22）</th><th style="text-align:left"><span class="sw b-fb"></span>梯度投影法（式 31）</th></tr>
-    <tr><td>每步做什麼</td><td style="text-align:left;font-family:var(--body);white-space:normal">走一步、投影到 Σ、加 F 回到 Λ</td><td style="text-align:left;font-family:var(--body);white-space:normal">把投影後的梯度加到 W(k)，假設 W(k) 已在 Λ 上</td></tr>
-    <tr><td>輸出功率</td><td style="text-align:left;font-family:var(--body);white-space:normal">收斂到最佳值加失調量</td><td style="text-align:left;font-family:var(--body);white-space:normal">短期內幾乎相同</td></tr>
-    <tr><td>捨入誤差</td><td style="text-align:left;font-family:var(--body);white-space:normal">每步被拉回約束平面，不累積</td><td style="text-align:left;font-family:var(--body);white-space:normal">沿平面平行移動，像隨機漫步累積</td></tr>
-    <tr><td>需要的先驗</td><td style="text-align:left;font-family:var(--body);white-space:normal" colspan="2">只要到達方向與頻帶；訊號與雜訊的統計都不需要</td></tr>
+  <h2>約束解決什麼</h2>
+  <div class="scroll"><table class="tbl-sum">
+    <tr><th>項目</th><th><span class="sw b-c"></span>受限 LMS（式 22）</th><th><span class="sw b-fb"></span>梯度投影法（式 31）</th></tr>
+    <tr><td>每步做什麼</td><td>走一步、投影到 Σ、加 F 回到 Λ</td><td>把投影後的梯度加到 W(k)，假設 W(k) 已在 Λ 上</td></tr>
+    <tr><td>輸出功率</td><td>收斂到最佳值加失調量</td><td>200 次內幾乎相同</td></tr>
+    <tr><td>捨入誤差</td><td>每步被拉回約束平面，不累積</td><td>沿平面平行移動，像隨機漫步累積</td></tr>
+    <tr><td>需要的先驗</td><td colspan="2">只要看向方向與想要的頻率響應；訊號與雜訊的統計都不需要</td></tr>
   </table></div>
-  <p>兩個演算法的差別只是式 (19) 最後一項 C(C<sup>T</sup>C)<sup>−1</sup>[𝓕 − C<sup>T</sup>W(k)]：完美算術下它是零，可以丟掉；數位實作下它就是自我修正。受限 LMS 的限制也和這一頁的假設綁在一起：它假設非看向方向的雜訊與訊號不相關，多路徑或同調雜波會讓處理器用訊號的複本把訊號本身抵消掉（這是另一支程式〈相干訊號與空間平滑〉處理的題目）；實作誤差則會讓它在字面上滿足約束、實際上壓掉訊號。</p>
-  <p>復現的數字：特徵值 0.111–8.356（論文 0.111–8.355）、失調量界 15.5–17.0 %（論文 15.2–17.0 %），集成模擬實測穩態失調量落在界內、最佳輸出功率 2.495（論文 Fig. 11 讀圖約 2.5）。唯一對不上的是論文說式 (26) 給 μ 上界 0.074，代入論文自己的數字只得到 0.047；0.074 恰好等於 2/tr(PR<sub>xx</sub>P)，推測是原文計算時漏掉了分母的 σ<sub>max</sub>，不影響結論。</p>
+  <p>兩個演算法的差別只是式 (19) 最後一項 C(C<sup>T</sup>C)<sup>−1</sup>[𝓕 − C<sup>T</sup>W(k)]：完美算術下它是零，可以丟掉；數位實作下它就是自我修正，所以受限 LMS 可以無限期運行。</p>
+  <p>和論文對照的數字：特徵值 0.111–8.356（論文 0.111–8.355）、μ = 0.01 時失調量界 15.5–17.0 %（論文 15.2–17.0 %）、最佳輸出功率 2.495（論文 Fig. 11 讀圖約 2.5）。唯一對不上的是式 (26) 的 μ 上界：論文寫 0.074，代入論文自己的數字只得到 0.047；0.074 恰好等於 2/tr(PR<sub>xx</sub>P)，推測是原文計算時漏掉了分母的 σ<sub>max</sub>，不影響結論。</p>
 </section>
 
-<footer>依 Frost (1972) Sec. VII 與 Table I 的參數重新實作（K = 4、J = 4、τ 間距、6 位數浮點、μ = 0.01、𝓕<sup>T</sup> = [1, −2, 1.5, 2]），MATLAB 程式與 24 項驗證見本專案的 <code>matlab/</code> 資料夾。</footer>
+<footer>依 Frost (1972) Sec. VII 與 Table I 的參數重新實作（K = 4、J = 4、τ 間距、6 位數浮點、μ = 0.01、𝓕<sup>T</sup> = [1, −2, 1.5, 2]），MATLAB 程式與驗證見本專案的 <code>matlab/</code> 資料夾。</footer>
 </div>
 
 <script>
@@ -584,11 +477,6 @@ const Fvec2F = fv => { const F = new Float64Array(N); for (let n = 0; n < N; n++
 const colSums = w => { const s = []; for (let j = 0; j < J; j++) { let m = 0; for (let k = 0; k < K; k++) m += w[j * K + k]; s.push(m); } return s; };
 
 /* setup: everything frost1972_setup.m returns */
-function buildParts(o) { // one N x N matrix per point source (no white noise)
-  return SRC.map(s => { const Rp = new Float64Array(N * N), d = Math.sin(s.th * D2R);
-    for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) Rp[a * N + b] = s.P * acf((jOf(b) - jOf(a)) + (kOf(b) - kOf(a)) * d, s.fc, s.B, o.win);
-    return Rp; });
-}
 function setup(o) {
   const R = buildR(o), lambda = eigSym(R, N), C = new Float64Array(N * J);
   for (let n = 0; n < N; n++) C[n * J + jOf(n)] = 1;
@@ -606,7 +494,7 @@ function setup(o) {
   for (let i = 0; i < N; i++) { for (let j = 0; j < N; j++) col[j] = PR[i * N + j]; applyP(col, tmp); for (let j = 0; j < N; j++) PRP[i * N + j] = tmp[j]; }
   const sigAll = eigSym(PRP, N), sigma = sigAll.filter(v => v > 1e-9), trPRP = sigma.reduce((a, b) => a + b, 0);
   let trR = 0; for (let i = 0; i < N; i++) trR += R[i * N + i];
-  return { R, C, lambda, Wopt, Popt, F, PF, sigma, sigAll, trPRP, trR, L: chol(R), Rparts: buildParts(o), pw: o.pw, fv: o.fv.slice() };
+  return { R, C, lambda, Wopt, Popt, F, PF, sigma, sigAll, trPRP, trR, L: chol(R), pw: o.pw, fv: o.fv.slice() };
 }
 function bounds(S, mu) { const sm = S.sigma[0], sM = S.sigma[S.sigma.length - 1], t = S.trPRP;
   return { Mlo: (mu / 2) * t / (1 - (mu / 2) * (t + 2 * sm)), Mhi: (mu / 2) * t / (1 - (mu / 2) * (t + 2 * sM)),
@@ -635,93 +523,17 @@ function adapt(S, fv, mu, Nad, digits, seed) {
   }
   return out;
 }
-/* ensemble mean of W(k) over independent runs (double precision), vs. Wopt */
-function meanConv(S, fv, mu, Nrun, Nit, seed) {
-  const F = Fvec2F(fv), sum = []; for (let k = 0; k <= Nit; k++) sum.push(new Float64Array(N));
-  const z = new Float64Array(N), x = new Float64Array(N), v = new Float64Array(N), pv = new Float64Array(N);
-  for (let r = 0; r < Nrun; r++) { const g = gaussian(seed + 7919 * r), W = Float64Array.from(F);
-    for (let i = 0; i < N; i++) sum[0][i] += W[i];
-    for (let k = 1; k <= Nit; k++) { for (let i = 0; i < N; i++) z[i] = g();
-      for (let i = 0; i < N; i++) { let s = 0; for (let j = 0; j <= i; j++) s += S.L[i * N + j] * z[j]; x[i] = s; }
-      let y = 0; for (let i = 0; i < N; i++) y += W[i] * x[i];
-      for (let i = 0; i < N; i++) v[i] = W[i] - mu * y * x[i];
-      applyP(v, pv); for (let i = 0; i < N; i++) { W[i] = pv[i] + F[i]; sum[k][i] += W[i]; } } }
-  const d0 = Math.hypot(...Array.from(F, (f, i) => f - S.Wopt[i]));
-  return sum.map(s => Math.hypot(...Array.from(s, (v, i) => v / Nrun - S.Wopt[i])) / d0);
-}
-/* array response and output-power breakdown */
-function gainDb(w, f, th) { const d = Math.sin(th * D2R); let re = 0, im = 0;
-  for (let n = 0; n < N; n++) { const ph = -TWO_PI * f * (kOf(n) * d + jOf(n)); re += w[n] * Math.cos(ph); im += w[n] * Math.sin(ph); }
-  return 10 * Math.log10(Math.max(re * re + im * im, 1e-12)); }
-function decompose(S, w) { const p = S.Rparts.map(Rp => quadForm(Rp, w)); let ww = 0; for (let i = 0; i < N; i++) ww += w[i] * w[i];
-  const white = S.pw * ww, noise = p[1] + p[2] + white; return { sig: p[0], A: p[1], B: p[2], white, ww, total: p[0] + noise, snr: 10 * Math.log10(p[0] / noise) }; }
-/* d-significant-digit rounding rules for the ensembles. Scaling by 10^n turns exact decimal ties (common here: the
-   difference of two 6-digit numbers with different exponents has a 7th digit 5) into exact .5, so the tie rule matters:
-   'even' = round half to even (unbiased), 'away' = round half away from zero (MATLAB round, biased in magnitude),
-   'trunc' = chopping (biased toward zero) */
-const POW10 = Array.from({ length: 81 }, (_, i) => Math.pow(10, i - 40));
-function quantRule(rule, d) {
-  const sc = v => POW10[d - 1 - Math.floor(Math.log10(Math.abs(v))) + 40];
-  if (rule === 'trunc') return v => { if (v === 0 || !Number.isFinite(v)) return v; const s = sc(v); return Math.trunc(v * s) / s; };
-  if (rule === 'away') return v => { if (v === 0 || !Number.isFinite(v)) return v; const s = sc(v), a = Math.round(Math.abs(v) * s) / s; return v < 0 ? -a : a; };
-  return v => { if (v === 0 || !Number.isFinite(v)) return v; const s = sc(v), y = Math.abs(v) * s, f = Math.floor(y), r = y - f > 0.5 ? f + 1 : y - f < 0.5 ? f : (f % 2 === 0 ? f : f + 1); return (v < 0 ? -r : r) / s; };
-}
-/* ensemble 1: steady-state misadjustment vs mu (double precision) */
-function* misGen(S, mus, Nrun, Nmeas) {
-  const F = S.F, L = S.L, z = new Float64Array(N), x = new Float64Array(N), v = new Float64Array(N), pv = new Float64Array(N), W = new Float64Array(N), out = [];
-  for (let a = 0; a < mus.length; a++) { const mu = mus[a], burn = Math.max(1500, Math.round(12 / mu)), per = [];
-    for (let r = 0; r < Nrun; r++) { const g = gaussian(5000 + 1009 * a + 13 * r); W.set(F); let acc = 0;
-      for (let k = 0; k < burn + Nmeas; k++) {
-        for (let i = 0; i < N; i++) z[i] = g();
-        for (let i = 0; i < N; i++) { let s = 0; for (let j = 0; j <= i; j++) s += L[i * N + j] * z[j]; x[i] = s; }
-        let y = 0; for (let i = 0; i < N; i++) y += W[i] * x[i];
-        for (let i = 0; i < N; i++) v[i] = W[i] - mu * y * x[i];
-        applyP(v, pv); for (let i = 0; i < N; i++) W[i] = pv[i] + F[i];
-        if (k >= burn) { let p = 0; for (let j = 0; j < N; j++) { let u = 0; for (let i = j; i < N; i++) u += L[i * N + j] * W[i]; p += u * u; } acc += p; }   // W'RW = |L'W|^2
-      }
-      per.push(acc / Nmeas / S.Popt - 1);
-      yield `μ = ${mu}：第 ${r + 1}/${Nrun} 次`;
-    }
-    const M = per.reduce((x, y) => x + y, 0) / Nrun, se = Math.sqrt(per.reduce((x, y) => x + (y - M) ** 2, 0) / (Nrun - 1) / Nrun);
-    out.push({ mu, M, se });
-  }
-  return out;
-}
-/* ensemble 2: constraint error of CLMS and GP with d-digit arithmetic, averaged over runs */
-function* errGen(S, mu, Nrun, T, digits, rule) {
-  const q = quantRule(rule, digits), F = S.F, L = S.L, fv = S.fv, z = new Float64Array(N), x = new Float64Array(N), v = new Float64Array(N), pv = new Float64Array(N);
-  const sc = new Float64Array(T + 1), sg = new Float64Array(T + 1);
-  const cerr = w => colSums(w).reduce((s, c, j) => s + (c - fv[j]) ** 2, 0);
-  for (let r = 0; r < Nrun; r++) { const g = gaussian(77001 + 17 * r), Wc = Float64Array.from(F, q), Wg = Float64Array.from(F, q);
-    sc[0] += cerr(Wc); sg[0] += cerr(Wg);
-    for (let k = 1; k <= T; k++) {
-      for (let i = 0; i < N; i++) z[i] = g();
-      for (let i = 0; i < N; i++) { let s = 0; for (let j = 0; j <= i; j++) s += L[i * N + j] * z[j]; x[i] = s; }
-      let y = 0; for (let i = 0; i < N; i++) y += Wc[i] * x[i]; y = q(y);
-      for (let i = 0; i < N; i++) v[i] = q(Wc[i] - q(mu * y * x[i]));
-      applyP(v, pv); for (let i = 0; i < N; i++) Wc[i] = q(q(pv[i]) + F[i]);
-      let yg = 0; for (let i = 0; i < N; i++) yg += Wg[i] * x[i]; yg = q(yg);
-      for (let i = 0; i < N; i++) v[i] = q(mu * yg * x[i]);
-      applyP(v, pv); for (let i = 0; i < N; i++) Wg[i] = q(Wg[i] - q(pv[i]));
-      sc[k] += cerr(Wc); sg[k] += cerr(Wg);
-    }
-    yield `第 ${r + 1}/${Nrun} 次`;
-  }
-  for (let k = 0; k <= T; k++) { sc[k] /= Nrun; sg[k] /= Nrun; }
-  return { sc, sg, T, rule };
-}
-function loglogSlope(a, k0, k1) { let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
-  for (let k = k0; k <= k1; k++) { if (!(a[k] > 0)) continue; const X = Math.log10(k), Y = Math.log10(a[k]); n++; sx += X; sy += Y; sxx += X * X; sxy += X * Y; }
-  return (n * sxy - sx * sy) / (n * sxx - sx * sx); }
 </script>
 <script>
 /* ---------- UI ---------- */
 const $ = id => document.getElementById(id);
 const fmt = (v, d = 2) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(d);
 const sup = s => String(s).replace('-', '⁻').replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
-const sci = v => { if (!(v > 0)) return '0'; const e = Math.floor(Math.log10(v)), m = v / 10 ** e; return `${m.toFixed(1)}×10${sup(e)}`; };
-const DEF = { fv: [1, -2, 1.5, 2], mu: 0.01, pw: 0.1, win: true, digits: 6, Nad: 200, seed: 2026 };
-const state = { fv: DEF.fv.slice(), mu: DEF.mu, pw: DEF.pw, win: DEF.win, digits: DEF.digits, Nad: DEF.Nad, seed: DEF.seed, k: DEF.Nad, nrun: 60, psdLin: false, errLin: false, geo: 0, cmp: 'opt' };
+// scientific notation as HTML (real superscripts render cleanly in every font, unlike the Unicode ⁰¹² glyphs)
+const sci = v => { if (!(v > 0)) return '0'; let e = Math.floor(Math.log10(v)), m = (v / 10 ** e).toFixed(1); if (m === '10.0') { m = '1.0'; e += 1; } return `${m}×10<sup>${e < 0 ? '−' : ''}${Math.abs(e)}</sup>`; };
+// the paper's simulation (Sec. VII): Table I, F = [1, -2, 1.5, 2], mu = 0.01, 6 significant digits, 200 adaptations
+const PAPER = { fv: [1, -2, 1.5, 2], mu: 0.01, pw: 0.1, win: true, digits: 6, Nad: 200 };
+const state = { seed: 2026, k: null, psdLin: true, geo: 0 };
 
 /* ---- small SVG line chart with legend + hover readout ---- */
 const charts = [];
@@ -731,30 +543,27 @@ class Chart {
   set(cfg) { this.cfg = cfg; this.draw(); }
   draw() {
     const c = this.cfg; if (!c) return;
-    const W = Math.max(280, this.host.clientWidth || 600), H = c.h || Math.round(Math.min(330, Math.max(220, W * 0.46)));
-    const m = { l: c.yFmt ? 66 : 52, r: 12, t: c.vlines ? 20 : 10, b: 40 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const W = Math.max(240, this.host.clientWidth || 600), H = c.h || Math.round(Math.min(330, Math.max(220, W * 0.46)));
+    const m = { l: c.ml || 46, r: 12, t: 12, b: 40 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
     const X = v => m.l + (v - c.x[0]) / (c.x[1] - c.x[0]) * pw, Y = v => m.t + (1 - (v - c.y[0]) / (c.y[1] - c.y[0])) * ph;
     this.geo = { m, pw, ph, W, H, X };
     const id = 'cp' + charts.indexOf(this), yl = c.yFmt || (t => String(t).replace('-', '−'));
-    let s = '<div class="legend">' + c.series.map(q => `<span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" class="c-${q.c}" stroke-width="${q.w || 2}"${q.dash ? ' stroke-dasharray="5 3"' : ''}/></svg>${q.name}</span>`).join('') + '</div>';
-    s += `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${c.title}"><defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath></defs>`;
+    let s = c.series.some(q => q.name) ? '<div class="legend">' + c.series.filter(q => q.name).map(q => `<span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" class="c-${q.c}" stroke-width="${q.w || 2}"${q.dash ? ' stroke-dasharray="5 3"' : ''}/></svg>${q.name}</span>`).join('') + '</div>' : '';
+    s += `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${c.title}"><defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t - 2}" width="${pw}" height="${ph + 2}"/></clipPath></defs>`;
     for (const t of c.yTicks) s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${m.l - 6}" y="${Y(t) + 4}" text-anchor="end">${yl(t)}</text>`;
     const skip = pw / c.xTicks.length < 36 ? 2 : 1;
-    c.xTicks.forEach((t, i) => { if (i % skip === 0) s += `<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${m.t + ph}" y2="${m.t + ph + 4}"/><text x="${X(t)}" y="${m.t + ph + 16}" text-anchor="middle">${c.xFmt ? c.xFmt(t) : String(t).replace('-', '−')}</text>`; });
+    c.xTicks.forEach((t, i) => { if (i % skip === 0) s += `<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${m.t + ph}" y2="${m.t + ph + 4}"/><text x="${X(t)}" y="${m.t + ph + 16}" text-anchor="middle">${String(t).replace('-', '−')}</text>`; });
     s += `<line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${m.t + ph}" y2="${m.t + ph}"/>`;
     s += `<text class="lab" x="${m.l + pw / 2}" y="${H - 4}" text-anchor="middle">${c.xLabel}</text>`;
     s += `<text class="lab" transform="translate(12 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${c.yLabel}</text>`;
-    for (const v of c.vlines || []) s += `<line class="ref" x1="${X(v.x)}" x2="${X(v.x)}" y1="${m.t}" y2="${m.t + ph}"/><text class="lab" x="${X(v.x)}" y="${m.t - 6}" text-anchor="middle">${v.label}</text>`;
-    for (const h of c.hlines || []) s += `<line class="${h.cls || 'thr'}" x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}"${h.stroke ? ` style="stroke:${h.stroke}"` : ''}/>` + (h.label ? `<text class="lab" x="${h.left ? m.l + 6 : W - m.r - 4}" y="${Y(h.y) - 5}" text-anchor="${h.left ? 'start' : 'end'}">${h.label}</text>` : '');
+    for (const h of c.hlines || []) s += `<line class="${h.cls || 'thr'}" x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}"/>` + (h.label ? `<text class="lab" x="${h.left ? m.l + 6 : W - m.r - 4}" y="${Y(h.y) - 5}" text-anchor="${h.left ? 'start' : 'end'}">${h.label}</text>` : '');
     s += `<g clip-path="url(#${id})">`;
-    const lo = c.y[0] - (c.y[1] - c.y[0]) * 0.2;
     for (const q of c.series) {
       if (q.legendOnly) continue;
-      let d = ''; for (let i = 0; i < q.xs.length; i++) d += (i ? 'L' : 'M') + X(q.xs[i]).toFixed(1) + ' ' + Y(Math.max(q.ys[i], lo)).toFixed(1);
+      let d = ''; for (let i = 0; i < q.xs.length; i++) d += (i ? 'L' : 'M') + X(q.xs[i]).toFixed(1) + ' ' + Y(q.ys[i]).toFixed(1);
       s += `<path d="${d}" class="c-${q.c}" style="fill:none" stroke-width="${q.w || 2}" stroke-linejoin="round"${q.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
-      if (q.markers) for (let i = 0; i < q.xs.length; i++) s += `<circle cx="${X(q.xs[i])}" cy="${Y(q.ys[i])}" r="4" class="c-${q.c}" style="stroke:var(--surface)" stroke-width="2"/>`;
     }
-    if (c.cursor != null && c.cursor <= c.x[1]) s += `<line class="cur" x1="${X(c.cursor)}" x2="${X(c.cursor)}" y1="${m.t}" y2="${m.t + ph}"/>`;
+    if (c.cursor != null) s += `<line class="cur" x1="${X(c.cursor)}" x2="${X(c.cursor)}" y1="${m.t}" y2="${m.t + ph}"/>`;
     s += `</g><line class="xhair" hidden y1="${m.t}" y2="${m.t + ph}"/></svg><div class="tip" hidden></div>`;
     this.host.innerHTML = s;
   }
@@ -770,17 +579,18 @@ class Chart {
       const i = Math.abs(q.xs[a] - xv) <= Math.abs(q.xs[b] - xv) ? a : b;
       if (snapX == null) snapX = q.xs[i];
       if (Math.abs(q.xs[i] - snapX) > (c.x[1] - c.x[0]) * 0.02) continue;
-      rows += `<div><span class="sw b-${q.c}"></span>${q.name}　${c.yTip ? c.yTip(q.ys[i]) : fmt(q.ys[i], c.yDigits ?? 1)}</div>`;
+      rows += `<div><span class="sw b-${q.c}"></span>${q.tipName || q.name}　${c.yTip ? c.yTip(q.ys[i]) : fmt(q.ys[i], c.yDigits ?? 1)}</div>`;
     }
     const tip = this.host.querySelector('.tip'), cross = svg.querySelector('.xhair'), cx = g.X(snapX);
     cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.removeAttribute('hidden');
-    tip.innerHTML = `<b>${c.xName} ${c.xTip ? c.xTip(snapX) : fmt(snapX, c.xDigits ?? 0)}</b>` + rows; tip.hidden = false;
+    tip.innerHTML = `<b>${c.xName} ${fmt(snapX, c.xDigits ?? 0)}</b>` + rows; tip.hidden = false;
     const tw = tip.offsetWidth; tip.style.left = Math.max(0, cx + 12 + tw > g.W ? cx - 12 - tw : cx + 12) + 'px';
     tip.style.top = (svg.offsetTop + g.m.t + g.ph - tip.offsetHeight - 6) + 'px';
   }
   unhover() { const t = this.host.querySelector('.tip'), x = this.host.querySelector('.xhair'); if (t) t.hidden = true; if (x) x.setAttribute('hidden', ''); }
 }
 function range(a, step, b) { const out = []; const cnt = Math.round((b - a) / step); for (let i = 0; i <= cnt; i++) out.push(a + i * step); return out; }
+const tile = (k, v, s, cls = '') => `<div class="tile"><div class="k">${k}</div><div class="v ${cls}">${v}</div><div class="s">${s}</div></div>`;
 
 /* ---- basics 1: tap grid ---- */
 function drawTaps() {
@@ -789,255 +599,96 @@ function drawTaps() {
   let h = '<div></div>'; for (let j = 0; j < J; j++) h += `<div class="hd">抽頭 ${j + 1}</div>`;
   const same = Math.abs(d) < 1e-9;
   for (let k = 0; k < K; k++) { h += `<div class="rl">感測器 ${k + 1}</div>`; for (let j = 0; j < J; j++) h += `<div class="cell${same ? ' eq' : ''}">${fmt(k * d + j, 2)} τ</div>`; }
-  h += '<div class="rl">直行和</div>'; for (let j = 0; j < J; j++) h += `<div class="sum">f${sup(j + 1)}</div>`;
-  $('taps').innerHTML = h.replace(/f([⁰¹²³⁴⁵⁶⁷⁸⁹])/g, (_, s) => 'f<sub>' + '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(s) + '</sub>');
-  $('tapSt').innerHTML = same ? '<span class="ok">✓ θ = 0°：每一直行延遲相同 → 陣列等效於一條 J = 4 抽頭的 FIR 濾波器，等效權重 f_j = 直行和</span>' : `θ = ${fmt(th, 0)}°：同一直行內相鄰感測器差 ${fmt(d, 2)} τ，四個權重看到的不是同一段波形；約束只鎖住 0° 的響應，這個方向的響應由演算法自由調整（壓低）`;
+  h += '<div class="rl">直行和</div>'; for (let j = 0; j < J; j++) h += `<div class="sum">f<sub>${j + 1}</sub></div>`;
+  $('taps').innerHTML = h;
+  $('tapSt').innerHTML = same ? '<span class="ok">✓ θ = 0°：每一直行延遲相同 → 陣列等效於一條 J = 4 抽頭的 FIR 濾波器，等效權重 f<sub>j</sub> = 直行和</span>' : `θ = ${fmt(th, 0)}°：同一直行內相鄰感測器差 ${fmt(d, 2)} τ，四個權重看到的不是同一段波形；約束只鎖住 0° 的響應，這個方向的響應由演算法自由調整（壓低）`;
 }
 
-/* ---- setup charts ---- */
-const chPsd = new Chart($('chPsd')), chEig = new Chart($('chEig')), chResp = new Chart($('chResp'));
-let S = null;
-function runSetup() {
-  $('pwo').textContent = state.pw.toFixed(2);
-  document.querySelectorAll('[data-win]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.win === '1') === state.win)));
-  S = setup({ win: state.win, pw: state.pw, fv: state.fv });
+/* ---- setup: Table I, Fig. 10, eigenvalues, Fig. 9, Sec. VII numbers ---- */
+const chPsd = new Chart($('chPsd')), chResp = new Chart($('chResp'));
+const S = setup({ win: PAPER.win, pw: PAPER.pw, fv: PAPER.fv }), B = bounds(S, PAPER.mu);
+function drawSetup() {
+  const lam = S.lambda;
+  $('tilesR').innerHTML = tile('最小特徵值 λ<sub>min</sub>', lam[0].toFixed(3), '論文 0.111') + tile('最大特徵值 λ<sub>max</sub>', lam[N - 1].toFixed(3), '論文 8.355');
+  const fs = range(0, 0.0025, 0.5), fv = PAPER.fv;
+  const H2 = fs.map(f => { let re = 0, im = 0; for (let j = 0; j < J; j++) { re += fv[j] * Math.cos(TWO_PI * f * j); im -= fv[j] * Math.sin(TWO_PI * f * j); } return re * re + im * im; });
+  chResp.set({ title: '看向方向頻率響應（Fig. 9）', x: [0, 0.5], y: [0, 25], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [0, 5, 10, 15, 20, 25], xLabel: '頻率（1.0 = 1/τ）', yLabel: '|H(f)|²', xName: 'f', xDigits: 3, yDigits: 2, h: 230,
+    series: [{ tipName: '|H(f)|²', c: 'ink', xs: fs, ys: H2 }] });
+  const ok = PAPER.mu < B.mu26;
+  $('tilesOpt').innerHTML =
+    tile('最佳輸出功率', S.Popt.toFixed(3), 'Fig. 11 最低的水平線，讀圖約 2.5') +
+    tile('W(0) = F 的輸出功率', S.PF.toFixed(3), 'Fig. 11 的起點') +
+    tile('失調量（式 27）', `${(100 * B.Mlo).toFixed(1)}–${(100 * B.Mhi).toFixed(1)}<small> %</small>`, '論文 15.2–17.0 %') +
+    tile('μ 上界（式 26）', B.mu26.toFixed(3), `論文印 0.074（= 2/tr(PR<sub>xx</sub>P) = ${(2 / S.trPRP).toFixed(4)}）；μ = 0.01 ${ok ? '在界內' : '超過'}`, ok ? 'ok' : 'ng');
   drawPsd();
-  const lam = S.lambda, idx = lam.map((_, i) => i + 1), sigShow = S.sigAll.map(v => Math.max(v, 0));
-  $('tilesR').innerHTML = [['λ_min', lam[0].toFixed(4), '論文 0.111'], ['λ_max', lam[N - 1].toFixed(3), '論文 8.355'], ['tr(R_xx)', S.trR.toFixed(2), '抽頭功率總和'], ['tr(PR_xxP)', S.trPRP.toFixed(2), `非零特徵值 ${S.sigma.length} 個`]]
-    .map(t => `<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="s">${t[2]}</div></div>`).join('');
-  chEig.set({ title: '特徵值', x: [0.5, 16.5], y: [0, 9.5], xTicks: range(1, 1, 16), yTicks: [0, 2, 4, 6, 8], xLabel: '序號（由小到大）', yLabel: '特徵值', xName: '第', xDigits: 0, yDigits: 3, h: 240,
-    hlines: [{ y: 0.111, label: '論文 λ_min = 0.111' }, { y: 8.355, label: '論文 λ_max = 8.355' }],
-    series: [{ name: 'R_xx', c: 'ink', xs: idx, ys: lam, markers: true, w: 1 }, { name: 'P R_xx P（4 個為零）', c: 'c', xs: idx, ys: sigShow, markers: true, w: 1 }] });
-  runOpt();
 }
 function drawPsd() {
-  const fs = range(0, 0.0025, 0.5);
-  const dB = v => 10 * Math.log10(Math.max(v, 1e-5));
+  const fs = range(0, 0.0025, 0.5), dB = v => 10 * Math.log10(Math.max(v, 1e-5));
   document.querySelectorAll('[data-psd]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.psd === '1') === state.psdLin)));
-  const spec = SRC.map(s => psd(s, state.win, fs));
-  if (state.psdLin) { const top = Math.ceil(Math.max(...spec.flat()) / 2) * 2;
-    chPsd.set({ title: '功率頻譜', x: [0, 0.5], y: [0, top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: range(0, 2, top), xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率頻譜密度（線性）', xName: 'f', xDigits: 3, yDigits: 2, h: 260,
-      hlines: [{ y: state.pw, label: `白雜訊（每抽頭 ${state.pw.toFixed(2)}）`, cls: 'thr' }],
-      series: SRC.map((s, i) => ({ name: `${s.name}（P = ${s.P.toFixed(1)}，${s.th}°）`, c: s.c, xs: fs, ys: spec[i] })) });
+  const spec = SRC.map(s => psd(s, true, fs)), names = SRC.map(s => `${s.name}（${s.th}°）`);
+  const base = { title: '功率頻譜（Fig. 10）', x: [0, 0.5], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], xLabel: '頻率（1.0 = 1/τ）', xName: 'f', xDigits: 3, h: 260 };
+  if (state.psdLin) {
+    const top = Math.ceil(Math.max(...spec.flat()) / 2) * 2;
+    chPsd.set({ ...base, y: [0, top], yTicks: range(0, 2, top), yLabel: '功率頻譜密度', yDigits: 2,
+      hlines: [{ y: PAPER.pw, label: '白雜訊 0.1', cls: 'thr', left: true }],
+      series: SRC.map((s, i) => ({ name: names[i], c: s.c, xs: fs, ys: spec[i] })) });
   } else
-  chPsd.set({ title: '功率頻譜', x: [0, 0.5], y: [-40, 15], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [-40, -30, -20, -10, 0, 10], yFmt: t => t + ' dB', xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率頻譜密度 (dB)', xName: 'f', xDigits: 3, yDigits: 1, h: 260,
-    hlines: [{ y: dB(state.pw), label: `白雜訊（每抽頭 ${state.pw.toFixed(2)}）`, cls: 'thr' }],
-    series: SRC.map((s, i) => ({ name: `${s.name}（P = ${s.P.toFixed(1)}，${s.th}°）`, c: s.c, xs: fs, ys: spec[i].map(dB) })) });
-}
-function runOpt() {
-  const fv = state.fv, fs = range(0, 0.0025, 0.5);
-  const H2 = fs.map(f => { let re = 0, im = 0; for (let j = 0; j < J; j++) { re += fv[j] * Math.cos(TWO_PI * f * j); im -= fv[j] * Math.sin(TWO_PI * f * j); } return re * re + im * im; });
-  const mx = Math.max(...H2, 1e-9), top = Math.ceil(mx / 10) * 10 || 10;
-  chResp.set({ title: '看向方向頻率響應', x: [0, 0.5], y: [0, top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: range(0, top / 5, top), xLabel: '頻率（1.0 = 1/τ）', yLabel: '|H(f)|²', xName: 'f', xDigits: 3, yDigits: 2, h: 230,
-    series: [{ name: `|H(f)|²，𝓕ᵀ = [${fv.map(v => fmt(v, 1)).join(', ')}]`, c: 'ink', xs: fs, ys: H2 }] });
-  S = setup({ win: state.win, pw: state.pw, fv });
-  const b = bounds(S, state.mu); $('mu0o').textContent = state.mu.toFixed(3);
-  const row = (k, v, s, cls = '') => `<div class="tile"><div class="k">${k}</div><div class="v ${cls}">${v}</div><div class="s">${s}</div></div>`;
-  $('tilesOpt').innerHTML = row('最佳輸出功率 E[y_opt²]', S.Popt.toFixed(3), '論文 Fig. 11 讀圖約 2.5') + row('W(0) = F 的輸出功率', S.PF.toFixed(3), '起點，只滿足約束') +
-    row('失調量界（式 27）', `${(100 * b.Mlo).toFixed(1)}–${(100 * b.Mhi).toFixed(1)} %`, `μ = ${state.mu.toFixed(3)}；論文 15.2–17.0 %`, b.Mhi < 0 || b.Mhi > 2 ? 'ng' : '') +
-    row('均方收斂上界（式 26）', b.mu26.toFixed(3), (state.mu < b.mu26 ? '✓ 目前 μ 在界內' : '✗ 目前 μ 超過，式 (27) 不再成立') + `；式 (28) 保守值 ${b.mu28.toFixed(3)}`, state.mu < b.mu26 ? 'ok' : 'ng') +
-    row('論文印的 0.074 從哪來', (2 / S.trPRP).toFixed(4), `= 2/tr(PR_xxP)，即式 (26) 少了 σ_max 項（推測）`) +
-    row('平均權重收斂 2/σ_max', b.muMean.toFixed(3), `論文用的充分條件 1/σ_max = ${b.muStab.toFixed(3)}`, state.mu < b.muStab ? 'ok' : '') +
-    row('時間常數（式 25）', `${b.tauFast.toFixed(1)} – ${b.tauSlow.toFixed(0)}`, '最快到最慢模式，單位：更新次數');
+    chPsd.set({ ...base, y: [-40, 15], yTicks: [-40, -30, -20, -10, 0, 10], yFmt: t => (t < 0 ? '−' : '') + Math.abs(t), yLabel: '功率頻譜密度 (dB)', yDigits: 1,
+      hlines: [{ y: dB(PAPER.pw), label: '白雜訊 0.1', cls: 'thr', left: true }],
+      series: SRC.map((s, i) => ({ name: names[i], c: s.c, xs: fs, ys: spec[i].map(dB) })) });
 }
 
-/* ---- adapt ---- */
-const chPow = new Chart($('chPow')), chErr = new Chart($('chErr')), chMean = new Chart($('chMean'));
+/* ---- adapt: Fig. 11 / Fig. 12 ---- */
+const chPow = new Chart($('chPow')), chErrC = new Chart($('chErrC')), chErrG = new Chart($('chErrG'));
 let run = null, timer = null;
-function runAdapt() {
-  state.k = Math.min(state.k, state.Nad); $('kcur').max = state.Nad; $('kcur').value = state.k;
-  $('mu1o').textContent = state.mu.toFixed(3); $('nado').textContent = state.Nad; $('mu2o').textContent = state.mu.toFixed(3);
-  document.querySelectorAll('[data-dig]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.dig === state.digits)));
-  run = adapt(S, state.fv, state.mu, state.Nad, state.digits, state.seed);
-  drawK(); runMean();
-}
-function logTicks(lo, hi) { const t = []; for (let e = Math.floor(lo); e <= Math.ceil(hi); e++) t.push(e); return t; }
+function runAdapt() { run = adapt(S, PAPER.fv, PAPER.mu, PAPER.Nad, PAPER.digits, state.seed); drawK(); }
 function drawK() {
-  const k = state.k, b = bounds(S, state.mu), xs = range(0, 1, state.Nad), Nad = state.Nad;
-  $('kcuro').textContent = k;
+  const Nad = PAPER.Nad, k = state.k, xs = range(0, 1, Nad), xt = range(0, 50, Nad), cur = k == null ? null : k;
   const pmax = Math.max(7, Math.ceil(Math.max(...run.Pc.slice(0, 20), ...run.Pg.slice(0, 20)) + 1));
-  const xt = Nad <= 400 ? range(0, 50, Nad) : range(0, Nad / 10, Nad);
-  chPow.set({ title: '輸出功率', x: [0, Nad], y: [0, pmax], xTicks: xt, yTicks: range(0, Math.ceil(pmax / 7), pmax), xLabel: '更新次數 k', yLabel: 'Wᵀ R_xx W', xName: 'k', yDigits: 3, cursor: k,
-    hlines: [{ y: S.Popt, cls: 'opt' }, { y: S.Popt * (1 + b.Mlo), cls: 'thr' }, { y: S.Popt * (1 + b.Mhi), cls: 'thr' }],
+  chPow.set({ title: '輸出功率（Fig. 11、Fig. 12 上圖）', x: [0, Nad], y: [0, pmax], xTicks: xt, yTicks: range(0, 1, pmax), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3, cursor: cur,
+    hlines: [{ y: S.Popt, cls: 'opt' }, { y: S.Popt * (1 + B.Mlo), cls: 'thr' }, { y: S.Popt * (1 + B.Mhi), cls: 'thr' }],
     series: [{ name: '受限 LMS', c: 'c', xs, ys: run.Pc }, { name: '梯度投影法', c: 'fb', xs, ys: run.Pg, w: 1.5 },
-      { name: `最佳輸出功率 ${S.Popt.toFixed(2)}`, c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true },
-      { name: `最佳值 × (1 + 失調量 ${(100 * b.Mlo).toFixed(1)}–${(100 * b.Mhi).toFixed(1)} %)`, c: 'ink', xs: [], ys: [], w: 1, dash: true, legendOnly: true }] });
-  document.querySelectorAll('[data-elin]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.elin === '1') === state.errLin)));
-  const floor = state.digits ? 1e-13 : 1e-32, lg = a => a.map(v => Math.log10(Math.max(v, floor)));
-  const Lc = lg(run.Ec), Lg = lg(run.Eg), allv = Lc.slice(1).concat(Lg.slice(1)), lo = Math.floor(Math.min(...allv)), hi = Math.ceil(Math.max(...allv));
-  const ylo = Math.max(lo, Math.log10(floor)), yhi = Math.max(hi, ylo + 3), yt = logTicks(ylo, yhi).filter((_, i, a) => a.length <= 10 || i % Math.ceil(a.length / 8) === 0);
-  if (state.errLin) {
-    const mx = Math.max(...run.Ec, ...run.Eg), e = Math.floor(Math.log10(Math.max(mx, 6e-10))) - 1, unit = 10 ** e;
-    const top = Math.max(60, Math.ceil(mx / unit / 10) * 10) * unit, steps = Math.round(top / unit / 10);
-    chErr.set({ title: '約束誤差', x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, top / Math.min(steps, 6), top), yFmt: t => `${Math.round(t / unit)}×10${sup(e)}`, xLabel: '更新次數 k', yLabel: '‖CᵀW − 𝓕‖²', xName: 'k', cursor: k, yTip: v => sci(v),
-      series: [{ name: '受限 LMS', c: 'c', xs, ys: run.Ec }, { name: '梯度投影法', c: 'fb', xs, ys: run.Eg }] });
-  } else
-  chErr.set({ title: '約束誤差', x: [0, Nad], y: [ylo, yhi], xTicks: xt, yTicks: yt, yFmt: t => '10' + sup(t), xLabel: '更新次數 k', yLabel: '‖CᵀW − 𝓕‖²', xName: 'k', cursor: k, yTip: v => sci(10 ** v),
-    series: [{ name: '受限 LMS', c: 'c', xs, ys: Lc }, { name: '梯度投影法', c: 'fb', xs, ys: Lg }] });
-  const tail = a => { const s = a.slice(Math.max(1, a.length - 50)); return s.reduce((x, y) => x + y, 0) / s.length; };
-  const gr = (a, n) => { const h = a.slice(1, 1 + Math.max(10, n >> 3)), t = a.slice(a.length - Math.max(10, n >> 3)); const m = v => v.reduce((x, y) => x + y, 0) / v.length; return m(t) / Math.max(m(h), 1e-300); };
-  const dg = state.digits ? `${state.digits} 位有效數字` : '雙精度';
-  $('tbAdapt').innerHTML = `<tr><th>指標（${dg}，N = ${Nad}）</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影法</th></tr>` +
-    `<tr><td>最後 50 次的平均輸出功率</td><td>${tail(run.Pc).toFixed(3)}</td><td>${tail(run.Pg).toFixed(3)}</td></tr>` +
-    `<tr><td>最佳值 + 失調量界</td><td colspan="2">${(S.Popt * (1 + b.Mlo)).toFixed(3)} – ${(S.Popt * (1 + b.Mhi)).toFixed(3)}</td></tr>` +
-    `<tr><td>第 ${k} 次的約束誤差</td><td>${sci(run.Ec[k])}</td><td>${sci(run.Eg[k])}</td></tr>` +
-    `<tr><td>最後一段 ÷ 最初一段的誤差比</td><td class="${gr(run.Ec, Nad) < 10 ? 'ok' : 'ng'}">×${gr(run.Ec, Nad).toFixed(1)}</td><td class="${gr(run.Eg, Nad) < 10 ? 'ok' : 'ng'}">×${gr(run.Eg, Nad).toFixed(0)}</td></tr>`;
-  drawNoise();
+      { name: `最佳值 ${S.Popt.toFixed(2)}`, c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true },
+      { name: `最佳值 ×（1 + 失調量界）`, c: 'ink', xs: [], ys: [], w: 1, dash: true, legendOnly: true }] });
+  // the paper's two lower graphs: linear scale, CLMS up to 6e-11, GP up to 60e-11 (in units of 1e-11)
+  const u = 1e-11, ec = run.Ec.map(v => v / u), eg = run.Eg.map(v => v / u);
+  const topC = Math.max(6, Math.ceil(Math.max(...ec))), topG = Math.max(60, Math.ceil(Math.max(...eg) / 10) * 10);
+  const errCfg = (top, step, c, ys, name) => ({ title: name, x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, step, top), xLabel: '更新次數 k', yLabel: '單位 10⁻¹¹', xName: 'k', cursor: cur, h: 210, ml: 38,
+    yTip: v => sci(v * u), series: [{ tipName: name, c, xs, ys }] });
+  chErrC.set(errCfg(topC, topC / 6, 'c', ec, '受限 LMS'));
+  chErrG.set(errCfg(topG, topG / 6, 'fb', eg, '梯度投影法'));
+  const kk = k == null ? Nad : k, tail = a => { const s = a.slice(Math.max(1, kk - 49), kk + 1); return s.reduce((x, y) => x + y, 0) / s.length; };
+  $('tbAdapt').innerHTML = `<tr><th>第 ${kk} 次更新</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影</th></tr>` +
+    `<tr><td>最近 50 次平均輸出功率</td><td>${tail(run.Pc).toFixed(3)}</td><td>${tail(run.Pg).toFixed(3)}</td></tr>` +
+    `<tr><td>論文的穩態範圍（式 27）</td><td colspan="2">${(S.Popt * (1 + B.Mlo)).toFixed(3)} – ${(S.Popt * (1 + B.Mhi)).toFixed(3)}</td></tr>` +
+    `<tr><td>約束誤差</td><td>${sci(run.Ec[kk])}</td><td>${sci(run.Eg[kk])}</td></tr>`;
 }
-function runMean() {
-  $('nruno').textContent = state.nrun;
-  const Nit = 300, b = bounds(S, state.mu), xs = range(0, 1, Nit), dev = meanConv(S, state.fv, state.mu, state.nrun, Nit, 9001);
-  const sm = S.sigma[0], sM = S.sigma[S.sigma.length - 1];
-  chMean.set({ title: '平均權重收斂', x: [0, Nit], y: [0, 1.05], xTicks: range(0, 50, Nit), yTicks: [0, 0.2, 0.4, 0.6, 0.8, 1], xLabel: '更新次數 k', yLabel: '‖E[W(k)] − W_opt‖ / ‖W(0) − W_opt‖', xName: 'k', yDigits: 3,
-    series: [{ name: `${state.nrun} 次模擬的樣本平均`, c: 'c', xs, ys: dev }, { name: `(1 − μσ_min)^k 慢界（σ_min = ${sm.toFixed(3)}）`, c: 'ink', xs, ys: xs.map(k => (1 - state.mu * sm) ** k), w: 1.2, dash: true }, { name: `(1 − μσ_max)^k 快界（σ_max = ${sM.toFixed(3)}）`, c: 'raw', xs, ys: xs.map(k => Math.max(0, 1 - state.mu * sM) ** k), w: 1.2, dash: true }] });
-}
-function stop() { if (timer) { clearInterval(timer); timer = null; $('play').textContent = '播放收斂過程'; } }
+function stop() { if (timer) { clearInterval(timer); timer = null; $('play').textContent = '播放收斂過程'; } state.k = null; }
 
 /* ---- geometry toggle (Fig. 6 / Fig. 8) ---- */
 const GEO_CAP = [
-  '① 走一步 −μ y(k) X(k)，離開 Λ；② 乘 P，正交投影到過原點的子空間 Σ；③ 加 F 回到 Λ。F 垂直於 Λ，所以②③都沿著法向量：W′、P[W′]、W(k+1) 在同一條垂線上，W(k+1) 正是 W′ 在 Λ 上的正交投影 PW′ + F。梯度投影法沒有③，只把投影後的梯度 −μPy(k)X(k) 加到 W(k)。',
-  'W(k) 因為捨入落在偏移平面 Λ + ε 上。受限 LMS 每步都做「投影再加 F」，不論 W(k) 偏了多少，W(k+1) 都回到 Λ，誤差只剩這一步的捨入。梯度投影法只加平行於 Λ 的增量 −μPy(k)X(k)，偏差 ε 原封不動留著，之後每步的捨入再疊上去，所以會像隨機漫步一樣累積（對照論文 Fig. 8）。'];
+  '約束平面 Λ：CᵀW = 𝓕；子空間 Σ：CᵀW = 0（過原點、與 Λ 平行）；F 垂直於 Λ，是 Λ 上離原點最近的點。① 走一步 −μ y(k) X(k)，離開 Λ；② 乘 P，正交投影到 Σ；③ 加 F 回到 Λ。②③都沿著法向量，所以 W(k+1) 正是 W′ 在 Λ 上的正交投影 PW′ + F。梯度投影法沒有③，只把投影後的梯度 −μPy(k)X(k) 加到 W(k)。',
+  'W(k) 因為捨入落在偏移平面 Λ + ε 上。受限 LMS 每步都做「投影再加 F」，不論 W(k) 偏了多少，W(k+1) 都回到 Λ，誤差只剩這一步的捨入。梯度投影法只加平行於 Λ 的增量 −μPy(k)X(k)，偏差 ε 原封不動留著，之後每步的捨入再疊上去，所以會累積（對照論文 Fig. 8）。'];
 function drawGeo() {
   $('geo0').toggleAttribute('hidden', state.geo !== 0); $('geo1').toggleAttribute('hidden', state.geo !== 1);
   document.querySelectorAll('[data-geo]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.geo === state.geo)));
   $('geoCap').textContent = GEO_CAP[state.geo];
 }
 
-/* ---- output-power breakdown + space-frequency heatmaps ---- */
-function drawNoise() {
-  if (!run || !S.Rparts) return;
-  const k = Math.min(state.k, run.Wc.length - 1);
-  const rows = [['W(0) = F', S.F], [`受限 LMS 第 ${k} 次`, run.Wc[k]], ['W_opt（最佳）', S.Wopt]].map(([n, w]) => ({ n, w, d: decompose(S, w) }));
-  const mx = Math.max(...rows.map(r => r.d.total));
-  const seg = (v, c, t) => `<span class="b-${c}" style="width:${(100 * Math.max(v, 0) / mx).toFixed(2)}%" title="${t} ${v.toFixed(3)}"></span>`;
-  $('chDec').innerHTML = rows.map(r => `<div class="dec-row"><div>${r.n}</div><div class="dec-bar" role="img" aria-label="${r.n} 輸出功率 ${r.d.total.toFixed(2)}">${seg(r.d.sig, 'c', '訊號')}${seg(r.d.A, 'f', '雜訊 A')}${seg(r.d.B, 'fb', '雜訊 B')}${seg(r.d.white, 'raw', '白雜訊')}</div><div class="dec-v">${r.d.total.toFixed(2)}</div></div>`).join('');
-  const cell = f => rows.map(r => `<td>${f(r)}</td>`).join(''), sgn = v => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1);
-  $('tbDec').innerHTML = `<tr><th>輸出成分</th>${rows.map(r => `<th>${r.n}</th>`).join('')}</tr>` +
-    `<tr><td>看向方向訊號</td>${cell(r => r.d.sig.toFixed(3))}</tr>` +
-    `<tr><td>雜訊 A（45°）</td>${cell(r => r.d.A.toFixed(3))}</tr>` +
-    `<tr><td>雜訊 B（60°）</td>${cell(r => r.d.B.toFixed(3))}</tr>` +
-    `<tr><td>白雜訊（‖W‖²）</td>${cell(r => `${r.d.white.toFixed(3)}（${r.d.ww.toFixed(2)}）`)}</tr>` +
-    `<tr><td>總輸出功率</td>${cell(r => r.d.total.toFixed(3))}</tr>` +
-    `<tr><td>輸出 SNR</td>${cell(r => sgn(r.d.snr) + ' dB')}</tr>` +
-    `<tr><td>增益：A 中心（45°，f = 0.2）</td>${cell(r => sgn(gainDb(r.w, 0.2, 45)) + ' dB')}</tr>` +
-    `<tr><td>增益：B 中心（60°，f = 0.4）</td>${cell(r => sgn(gainDb(r.w, 0.4, 60)) + ' dB')}</tr>`;
-  drawHeats();
-}
-const VIR = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
-function vir(t) { t = Math.min(1, Math.max(0, t)) * 4; const i = Math.min(3, Math.floor(t)), f = t - i; return VIR[i].map((c, j) => Math.round(c + (VIR[i + 1][j] - c) * f)); }
-function drawHeat(cv, w) {
-  const Wd = Math.max(240, Math.round(cv.parentElement.clientWidth || 360)), Hd = 230, dpr = window.devicePixelRatio || 1;
-  if (cv._w === w && cv._wd === Wd) return; cv._w = w; cv._wd = Wd;   // unchanged weights and size: keep the picture
-  cv.width = Math.round(Wd * dpr); cv.height = Math.round(Hd * dpr); cv.style.height = Hd + 'px';
-  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wd, Hd);
-  const m = { l: 34, r: 6, t: 6, b: 32 }, pw = Wd - m.l - m.r, ph = Hd - m.t - m.b, nx = 121, ny = 81;
-  const oc = document.createElement('canvas'); oc.width = nx; oc.height = ny; const og = oc.getContext('2d'), im = og.createImageData(nx, ny);
-  for (let iy = 0; iy < ny; iy++) { const f = 0.5 * (1 - iy / (ny - 1));
-    for (let ix = 0; ix < nx; ix++) { const c = vir((gainDb(w, f, -90 + 180 * ix / (nx - 1)) + 40) / 60), q = 4 * (iy * nx + ix);
-      im.data[q] = c[0]; im.data[q + 1] = c[1]; im.data[q + 2] = c[2]; im.data[q + 3] = 255; } }
-  og.putImageData(im, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(oc, m.l, m.t, pw, ph);
-  const cs = getComputedStyle(document.documentElement), mut = cs.getPropertyValue('--muted').trim() || '#718292';
-  const X = th => m.l + (th + 90) / 180 * pw, Y = f => m.t + (1 - f / 0.5) * ph;
-  g.font = '11px "IBM Plex Mono", ui-monospace, monospace'; g.fillStyle = mut; g.textAlign = 'center'; g.textBaseline = 'top';
-  for (const th of [-90, -45, 0, 45, 90]) g.fillText((th < 0 ? '−' : '') + Math.abs(th) + '°', Math.min(Math.max(X(th), m.l + 12), m.l + pw - 12), m.t + ph + 4);
-  g.textAlign = 'right'; g.textBaseline = 'middle';
-  for (const f of [0, 0.1, 0.2, 0.3, 0.4, 0.5]) g.fillText(f.toFixed(1), m.l - 5, Math.min(Math.max(Y(f), m.t + 6), m.t + ph - 4));
-  g.textAlign = 'center'; g.textBaseline = 'bottom'; g.fillText('入射角 θ', m.l + pw / 2, Hd - 1);
-  g.strokeStyle = '#ffffff'; g.fillStyle = '#ffffff'; g.lineWidth = 1.2; g.setLineDash([3, 2]); g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '12px "Noto Sans TC", system-ui, sans-serif';
-  for (const s of SRC) { const x0 = X(s.th) - 4, y0 = Y(s.fc + s.B / 2), y1 = Y(s.fc - s.B / 2); g.strokeRect(x0, y0, 8, y1 - y0); g.fillText(s.th === 0 ? '訊號' : s.th === 45 ? 'A' : 'B', x0 + 12, (y0 + y1) / 2); }
-  g.setLineDash([]);
-}
-function drawHeats() {
-  if (!run) return;
-  const k = Math.min(state.k, run.Wc.length - 1), useK = state.cmp === 'k';
-  document.querySelectorAll('[data-cmp]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cmp === state.cmp)));
-  $('hmT1').textContent = useK ? `受限 LMS 第 ${k} 次（跟隨上方 k 與精度設定）` : 'W_opt（理論最佳）';
-  drawHeat($('hm0'), S.F); drawHeat($('hm1'), useK ? run.Wc[k] : S.Wopt);
-}
-
-/* ---- ensembles (paper settings, computed in the background) ---- */
-const chMis = new Chart($('chMis')), chEns = new Chart($('chEns'));
-const ENS = { S: null, mis: null, err: null, rule: 'even', job: { mis: 0, err: 0 } };
-const MUS = [0.0025, 0.005, 0.01, 0.015, 0.02, 0.03];
-const paperS = () => ENS.S || (ENS.S = setup({ win: true, pw: DEF.pw, fv: DEF.fv }));
-function drive(name, gen, statusEl, done) {
-  const id = ++ENS.job[name], it = gen;
-  const tick = () => { if (id !== ENS.job[name]) return; const t0 = performance.now(); let r;
-    do { r = it.next(); } while (!r.done && performance.now() - t0 < 25);
-    if (r.done) { statusEl.textContent = ''; done(r.value); } else { statusEl.textContent = '計算中… ' + r.value; setTimeout(tick, 0); } };
-  setTimeout(tick, 0);
-}
-function drawMis() {
-  const S0 = paperS(), grid = range(0.001, 0.0005, 0.032), b = m => bounds(S0, m);
-  const series = [];
-  if (ENS.mis) series.push({ name: '實測（40 次獨立模擬）', c: 'c', xs: ENS.mis.map(r => r.mu), ys: ENS.mis.map(r => 100 * r.M), markers: true, w: 1.5 });
-  series.push({ name: '式 (27) 下界', c: 'ink', xs: grid, ys: grid.map(m => 100 * b(m).Mlo), w: 1.2, dash: true }, { name: '式 (27) 上界', c: 'raw', xs: grid, ys: grid.map(m => 100 * b(m).Mhi), w: 1.2, dash: true });
-  chMis.set({ title: '失調量', x: [0, 0.032], y: [0, 140], xTicks: [0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03], yTicks: [0, 20, 40, 60, 80, 100, 120, 140], yFmt: t => t + ' %', xLabel: '收斂常數 μ', yLabel: '失調量 M', xName: 'μ', xDigits: 4, yDigits: 1, h: 250, vlines: [{ x: 0.01, label: '論文 μ = 0.01' }], series });
-  $('tbMis').innerHTML = ENS.mis ? `<tr><th>μ</th><th>式 (27) 下界</th><th>實測 ± 2 標準誤</th><th>式 (27) 上界</th><th>與界相容</th></tr>` + ENS.mis.map(r => { const bb = b(r.mu), ok = r.M + 2 * r.se >= bb.Mlo && r.M - 2 * r.se <= bb.Mhi;
-    return `<tr><td>${r.mu}</td><td>${(100 * bb.Mlo).toFixed(2)} %</td><td>${(100 * r.M).toFixed(2)} ± ${(200 * r.se).toFixed(2)} %</td><td>${(100 * bb.Mhi).toFixed(2)} %</td><td class="${ok ? 'ok' : 'ng'}">${ok ? '✓' : '✗'}</td></tr>`; }).join('') : '';
-}
-function drawEns() {
-  if (!ENS.err) { chEns.set({ title: '約束誤差集成平均', x: [0, 3.31], y: [-13, -8], xTicks: [0, 1, 2, 3], xFmt: t => '10' + sup(t), yTicks: [-13, -12, -11, -10, -9, -8], yFmt: t => '10' + sup(t), xLabel: '更新次數 k（對數）', yLabel: '‖CᵀW − 𝓕‖² 的集成平均', xName: 'k', h: 260, series: [] }); $('tbEns').innerHTML = ''; return; }
-  const { sc, sg, T } = ENS.err, edges = [];
-  for (let i = 0; i <= 40; i++) { const e = Math.round(10 ** (i / 40 * Math.log10(T))); if (!edges.length || e > edges[edges.length - 1]) edges.push(e); }
-  const xs = [], yc = [], yg = [];
-  for (let i = 0; i + 1 < edges.length; i++) { const a = edges[i], b2 = edges[i + 1]; let mc = 0, mg = 0; for (let k = a; k < b2; k++) { mc += sc[k]; mg += sg[k]; }
-    xs.push(Math.log10(Math.sqrt(a * (b2 - 1 || 1)))); yc.push(Math.log10(Math.max(mc / (b2 - a), 1e-16))); yg.push(Math.log10(Math.max(mg / (b2 - a), 1e-16))); }
-  const iRef = xs.findIndex(x => x >= 2), ref = xs.map(x => yg[iRef] + (x - xs[iRef]));
-  const all = yc.concat(yg), lo = Math.floor(Math.min(...all)), hi = Math.ceil(Math.max(...all));
-  chEns.set({ title: '約束誤差集成平均', x: [0, Math.log10(T)], y: [lo, hi], xTicks: [0, 1, 2, 3], xFmt: t => '10' + sup(t), xTip: v => String(Math.round(10 ** v)), yTicks: range(lo, 1, hi), yFmt: t => '10' + sup(t), yTip: v => sci(10 ** v), xLabel: '更新次數 k（對數）', yLabel: '‖CᵀW − 𝓕‖² 的集成平均', xName: 'k', h: 260,
-    series: [{ name: '受限 LMS', c: 'c', xs, ys: yc, markers: true }, { name: '梯度投影法', c: 'fb', xs, ys: yg, markers: true }, { name: '斜率 1（隨機漫步，∝ k）', c: 'ink', xs, ys: ref, w: 1.2, dash: true }] });
-  const s1 = loglogSlope(sg, 20, 200), s2 = loglogSlope(sg, 200, T), rc = sc[T] / sc[20];
-  $('tbEns').innerHTML = `<tr><th>指標</th><th>數值</th><th>論文的說法</th></tr>` +
-    `<tr><td>梯度投影法 log–log 斜率，k = 20–200（Fig. 12 的範圍）</td><td>${s1.toFixed(2)}</td><td>1（線性成長）</td></tr>` +
-    `<tr><td>梯度投影法 log–log 斜率，k = 200–${T}</td><td>${s2.toFixed(2)}</td><td>1（線性成長）</td></tr>` +
-    `<tr><td>受限 LMS：k = ${T} 與 k = 20 的誤差比</td><td>×${rc.toFixed(1)}</td><td>有界，不隨 k 累積</td></tr>` +
-    `<tr><td>k = ${T} 時兩者的誤差</td><td>${sci(sc[T])} / ${sci(sg[T])}</td><td>—</td></tr>`;
-  const rule = { even: '四捨六入五成雙', away: '四捨五入（同 MATLAB round）', trunc: '截斷' }[ENS.err.rule || ENS.rule];
-  const nF = paperS().F.reduce((a, v) => a + v * v, 0).toFixed(2), nW = paperS().Wopt.reduce((a, v) => a + v * v, 0).toFixed(2);
-  let txt = `40 次獨立模擬、6 位有效數字（${rule}）、μ = 0.01，兩種演算法吃同一組快照；為了看清楚，每一段對數區間內的點先取平均。隨機漫步的期望平方距離與 k 成正比，在 log–log 圖上是斜率 1 的直線（虛線）；若每步的捨入誤差有固定的偏差，偏差會一路累加，平方距離與 k² 成正比，斜率變成 2。`;
-  if (s1 < 1.2) txt += `在論文 Fig. 12 的 200 次範圍內，梯度投影法的斜率是 ${s1.toFixed(2)}，和論文「線性成長」的說法一致；拉長到 ${T} 次，斜率升到 ${s2.toFixed(2)}。推測是因為論文的論證假設每步的捨入誤差獨立、零均值、變異數固定，但浮點數的捨入誤差和權重大小成正比，而權重在收斂過程中從 ‖F‖² = ${nF} 長到 ‖W_opt‖² = ${nW}。`;
-  else txt += `這個捨入規則有系統性偏差：${ENS.err.rule === 'trunc' ? '截斷每一步都把多出來的位數直接丟掉，誤差永遠朝零的方向，平均值不是零' : '6 位數算術裡，兩個指數不同的 6 位數相減，第 7 位常常剛好是 5，四捨五入每次都把這種「剛好一半」往遠離零的方向進位，誤差平均值不是零'}。所以梯度投影法的偏差不再是零均值的隨機漫步，而是一路累加的漂移，斜率接近 2（k = 20–200：${s1.toFixed(2)}，k = 200–${T}：${s2.toFixed(2)}）。論文的「線性成長」只在捨入誤差零均值時成立。${ENS.err.rule === 'away' ? 'MATLAB 版的 <code>quant()</code> 用的正是這個規則，所以 MATLAB 長時間跑出來的梯度投影法誤差會比無偏捨入大一個數量級左右。' : ''}`;
-  txt += `不論用哪種捨入規則，受限 LMS 的誤差都停在 10${sup(Math.floor(Math.log10(sc[T])))} 等級，k = ${T} 時兩者相差約 ${Math.round(Math.log10(sg[T] / sc[T]))} 個數量級：每一步重新加 F 會把任何偏差（零均值或不是）都拉回約束平面，這才是誤差修正特性的重點。`;
-  $('ensCap').innerHTML = txt;
-}
-function startMis() { drive('mis', misGen(paperS(), MUS, 40, 3000), $('misSt'), v => { ENS.mis = v; drawMis(); }); }
-function startEns() { document.querySelectorAll('[data-rnd]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.rnd === ENS.rule)));
-  drive('err', errGen(paperS(), 0.01, 40, 2000, 6, ENS.rule), $('ensSt'), v => { ENS.err = v; drawEns(); }); }
-
 /* ---- wiring ---- */
 document.querySelectorAll('[data-geo]').forEach(b => b.addEventListener('click', () => { state.geo = +b.dataset.geo; drawGeo(); }));
 document.querySelectorAll('[data-psd]').forEach(b => b.addEventListener('click', () => { state.psdLin = b.dataset.psd === '1'; drawPsd(); }));
-document.querySelectorAll('[data-elin]').forEach(b => b.addEventListener('click', () => { state.errLin = b.dataset.elin === '1'; drawK(); }));
-document.querySelectorAll('[data-cmp]').forEach(b => b.addEventListener('click', () => { state.cmp = b.dataset.cmp; drawHeats(); }));
-$('runMis').addEventListener('click', startMis); $('runEns').addEventListener('click', startEns);
-document.querySelectorAll('[data-rnd]').forEach(b => b.addEventListener('click', () => { ENS.rule = b.dataset.rnd; startEns(); }));
 $('th0').addEventListener('input', drawTaps);
-document.querySelectorAll('[data-win]').forEach(b => b.addEventListener('click', () => { state.win = b.dataset.win === '1'; stop(); runSetup(); runAdapt(); }));
-$('pw').addEventListener('input', e => { state.pw = +e.target.value; stop(); runSetup(); runAdapt(); });
-$('resetM').addEventListener('click', () => { state.pw = DEF.pw; state.win = true; $('pw').value = DEF.pw; stop(); runSetup(); runAdapt(); });
-const readF = () => { const v = [1, 2, 3, 4].map(i => +$('f' + i).value); if (v.every(Number.isFinite) && v.some(x => x !== 0)) { state.fv = v; stop(); runOpt(); runAdapt(); } };
-[1, 2, 3, 4].forEach(i => $('f' + i).addEventListener('change', readF));
-$('resetF').addEventListener('click', () => { DEF.fv.forEach((v, i) => $('f' + (i + 1)).value = v); readF(); });
-$('mu0').addEventListener('input', e => { state.mu = +e.target.value; $('mu1').value = state.mu; stop(); runOpt(); runAdapt(); });
-$('mu1').addEventListener('input', e => { state.mu = +e.target.value; $('mu0').value = state.mu; stop(); runOpt(); runAdapt(); });
-document.querySelectorAll('[data-dig]').forEach(b => b.addEventListener('click', () => { state.digits = +b.dataset.dig; stop(); runAdapt(); }));
-$('nad').addEventListener('input', e => { state.Nad = +e.target.value; state.k = state.Nad; stop(); runAdapt(); });
-$('kcur').addEventListener('input', e => { state.k = +e.target.value; stop(); drawK(); });
-$('reseed').addEventListener('click', () => { state.seed = (state.seed * 1664525 + 1013904223) >>> 0; stop(); runAdapt(); });
-$('resetA').addEventListener('click', () => { Object.assign(state, { mu: DEF.mu, digits: DEF.digits, Nad: DEF.Nad, seed: DEF.seed, k: DEF.Nad }); $('mu0').value = DEF.mu; $('mu1').value = DEF.mu; $('nad').value = DEF.Nad; stop(); runOpt(); runAdapt(); });
-$('nrun').addEventListener('input', e => { state.nrun = +e.target.value; runMean(); });
+$('reseed').addEventListener('click', () => { stop(); state.seed = (state.seed * 1664525 + 1013904223) >>> 0; runAdapt(); });
 $('play').addEventListener('click', () => {
-  if (timer) return stop();
+  if (timer) { stop(); drawK(); return; }
   state.k = 0; drawK(); $('play').textContent = '暫停';
-  const stepK = Math.max(1, Math.round(state.Nad / 120));
-  timer = setInterval(() => { state.k += stepK; if (state.k >= state.Nad) { state.k = state.Nad; drawK(); stop(); } else drawK(); }, 60);
+  timer = setInterval(() => { state.k += 2; if (state.k >= PAPER.Nad) { stop(); drawK(); } else drawK(); }, 50);
 });
 let rz = null;
-new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { charts.forEach(c => c.draw()); drawHeats(); }, 80); }).observe(document.querySelector('.wrap'));
+new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => charts.forEach(c => c.draw()), 80); }).observe(document.querySelector('.wrap'));
 
-drawTaps(); drawGeo(); runSetup(); runAdapt(); drawMis(); drawEns();
-setTimeout(() => { startMis(); startEns(); }, 400);
+drawTaps(); drawGeo(); drawSetup(); runAdapt();
 </script>
 
 </body>

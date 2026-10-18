@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="重現 Frost (1972) Sec. VII 的模擬：Table I、Fig. 9–12、特徵值、μ 上界與失調量，受限 LMS 與梯度投影法的約束誤差比較">
+<meta name="description" content="重現 Frost (1972) Sec. VII 的模擬：Table I、Fig. 9–12、特徵值、μ 上界與失調量，約束 LMS 與梯度投影法的約束誤差比較">
 <title>線性約束自適應陣列處理</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
 <style>
@@ -155,13 +155,13 @@ section{scroll-margin-top:16px}
     <h2>參考資料</h2>
     <ol>
       <li>O. L. Frost III, “An algorithm for linearly constrained adaptive array processing,” <cite>Proc. IEEE</cite>, vol. 60, no. 8, pp. 926–935, Aug. 1972.</li>
-      <li>MATLAB 復現程式：<code>frost1972_setup.m</code>（訊號模型、R<sub>xx</sub>、最佳解）、<code>frost1972_adapt.m</code>（受限 LMS 與梯度投影法）、<code>frost1972_run.m</code>（Fig. 9–12 復現）、<code>frost1972_verify.m</code>（24 項自我驗證）。</li>
+      <li>MATLAB 復現程式：<code>frost1972_setup.m</code>（訊號模型、R<sub>xx</sub>、最佳解）、<code>frost1972_adapt.m</code>（約束 LMS 與梯度投影法）、<code>frost1972_run.m</code>（Fig. 9–12 復現）、<code>frost1972_verify.m</code>（24 項自我驗證）。</li>
     </ol>
   </div>
 </header>
 
 <section class="intro">
-  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁先用一張示意圖說明約束為什麼能鎖住看向方向，接著只重現論文 Sec. VII 做過的模擬：Table I、Fig. 9、Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11（受限 LMS）與 Fig. 12（梯度投影法）。</p>
+  <p class="lead">Frost 的約束 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁先用一張示意圖說明約束為什麼能鎖住看向方向，接著只重現論文 Sec. VII 做過的模擬：Table I、Fig. 9、Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11（約束 LMS）與 Fig. 12（梯度投影法）。</p>
   <nav class="toc" aria-label="章節">
     <a href="#sec-lock">約束為什麼鎖得住</a><a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
   </nav>
@@ -171,7 +171,7 @@ section{scroll-margin-top:16px}
   <div class="two">
     <div class="brief">
       <div class="step">程式一 · SETUP</div>
-      <h3>訊號模型、R<sub>xx</sub> 與最佳受限權重</h3>
+      <h3>訊號模型、R<sub>xx</sub> 與最佳約束權重</h3>
       <div class="file">frost1972_setup.m · frost1972_verify.m</div>
       <dl>
         <dt>問題</dt><dd>論文只印出 Table I 的功率、方向、頻寬，要重建出特徵值 0.111–8.355 的相關矩陣。</dd>
@@ -181,7 +181,7 @@ section{scroll-margin-top:16px}
     </div>
     <div class="brief">
       <div class="step">程式二 · ADAPT</div>
-      <h3>受限 LMS 與梯度投影法</h3>
+      <h3>約束 LMS 與梯度投影法</h3>
       <div class="file">frost1972_adapt.m · frost1972_run.m</div>
       <dl>
         <dt>問題</dt><dd>不知道 R<sub>xx</sub>，只能用每一步的輸入與輸出更新權重，還要讓約束永遠成立。</dd>
@@ -269,7 +269,7 @@ S.lambda = sort(eig(S.Rxx));                <span class="c">% 0.1110 ... 8.3556<
 <section id="sec-opt">
   <div class="step">程式一 · 最佳解</div>
   <h2>Fig. 9 的看向方向響應，與 μ = 0.01 的性能界</h2>
-  <p>看向方向的頻率響應只由向量 𝓕 = [f<sub>1</sub> … f<sub>J</sub>]<sup>T</sup> 決定，論文取 𝓕<sup>T</sup> = [1, −2, 1.5, 2]。把約束用拉格朗日乘數併入成本函數，梯度為零、代回約束，就得到最佳受限權重和它的輸出功率：</p>
+  <p>看向方向的頻率響應只由向量 𝓕 = [f<sub>1</sub> … f<sub>J</sub>]<sup>T</sup> 決定，論文取 𝓕<sup>T</sup> = [1, −2, 1.5, 2]。把約束用拉格朗日乘數併入成本函數，梯度為零、代回約束，就得到最佳約束權重和它的輸出功率：</p>
   <div class="math"><i>W</i><sub>opt</sub> = <i>R</i><sup>−1</sup><i>C</i> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕 ，　E[<i>y</i><sub>opt</sub><sup>2</sup>] = 𝓕<sup>T</sup> ( <i>C</i><sup>T</sup><i>R</i><sup>−1</sup><i>C</i> )<sup>−1</sup> 𝓕</div>
   <div class="panel">
     <h3>看向方向的頻率響應（對照論文 Fig. 9）</h3>
@@ -302,9 +302,9 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
 
 <section id="sec-adapt">
   <div class="part"><div class="step">程式二 · ADAPT</div></div>
-  <h2>Fig. 11、Fig. 12：受限 LMS 與梯度投影法</h2>
+  <h2>Fig. 11、Fig. 12：約束 LMS 與梯度投影法</h2>
   <p>實際上 R<sub>xx</sub> 不知道，演算法只能用當下的抽頭電壓 X(k) 與輸出 y(k)。Frost 把未知的 R<sub>xx</sub>W 換成瞬時估計 X(k)y(k)，再讓每一步都回到約束平面：</p>
-  <div class="math">受限 LMS　<i>W</i>(<i>k</i>+1) = <i>P</i> [ <i>W</i>(<i>k</i>) − μ <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>) ] + <i>F</i> ，　<i>W</i>(0) = <i>F</i></div>
+  <div class="math">約束 LMS　<i>W</i>(<i>k</i>+1) = <i>P</i> [ <i>W</i>(<i>k</i>) − μ <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>) ] + <i>F</i> ，　<i>W</i>(0) = <i>F</i></div>
   <div class="math">梯度投影法　<i>W</i>(<i>k</i>+1) = <i>W</i>(<i>k</i>) − μ <i>P</i> <i>y</i>(<i>k</i>) <i>X</i>(<i>k</i>)</div>
   <div class="panel">
     <h3>模擬設定</h3>
@@ -325,15 +325,15 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
   </div>
   <div class="panel">
     <h3>約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup>（Fig. 11、Fig. 12 下圖）</h3>
-    <div class="seg" data-seg><button type="button" data-esc="g">Fig. 12 刻度（看梯度投影法）</button><button type="button" data-esc="c">Fig. 11 刻度（放大看受限 LMS）</button></div>
+    <div class="seg" data-seg><button type="button" data-esc="g">Fig. 12 刻度（看梯度投影法）</button><button type="button" data-esc="c">Fig. 11 刻度（放大看約束 LMS）</button></div>
     <div id="chErr"></div>
   </div>
   <div class="panel">
     <div class="scroll"><table id="tbAdapt"></table></div>
-    <p class="cap">受限 LMS 畫實線、梯度投影法畫虛線疊在上面，兩者吃同一組資料。功率圖的座標軸和論文一樣（縱軸 0–7、橫軸 0–200），也有三條水平實線：最下面一條是最佳輸出功率，上面靠得很近的兩條是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩條功率曲線幾乎重合（虛線的空隙裡看得到實線），因為 200 次內梯度投影法累積的約束誤差還很小，論文 Fig. 11、Fig. 12 的上圖也幾乎一樣。</p>
-    <p class="cap">論文兩張下圖的縱軸差了 10 倍（Fig. 11 是 6×10<sup>−11</sup>，Fig. 12 是 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。誤差圖可以在這兩個刻度間切換：用 Fig. 12 的刻度，受限 LMS 的實線幾乎貼在零上；換成 Fig. 11 的刻度才看得到它，這時梯度投影法的虛線早已衝出圖外。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
+    <p class="cap">約束 LMS 畫實線、梯度投影法畫虛線疊在上面，兩者吃同一組資料。功率圖的座標軸和論文一樣（縱軸 0–7、橫軸 0–200），也有三條水平實線：最下面一條是最佳輸出功率，上面靠得很近的兩條是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩條功率曲線幾乎重合（虛線的空隙裡看得到實線），因為 200 次內梯度投影法累積的約束誤差還很小，論文 Fig. 11、Fig. 12 的上圖也幾乎一樣。</p>
+    <p class="cap">論文兩張下圖的縱軸差了 10 倍（Fig. 11 是 6×10<sup>−11</sup>，Fig. 12 是 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。誤差圖可以在這兩個刻度間切換：用 Fig. 12 的刻度，約束 LMS 的實線幾乎貼在零上；換成 Fig. 11 的刻度才看得到它，這時梯度投影法的虛線早已衝出圖外。約束 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
   </div>
-  <details><summary>對照程式：受限 LMS 與梯度投影法的主迴圈</summary>
+  <details><summary>對照程式：約束 LMS 與梯度投影法的主迴圈</summary>
 <pre>W = q(S.F);                              <span class="c">% W(0) = F；q() 把每個值捨入到 6 位有效數字</span>
 for k = 1:Nsnap
     x    = X(:, k);
@@ -356,13 +356,13 @@ out.cerr = sum(E.^2, 1);                 <span class="c">% 約束誤差 ‖CᵀW
   <div class="step">整理</div>
   <h2>約束解決什麼</h2>
   <div class="scroll"><table class="tbl-sum">
-    <tr><th>項目</th><th><span class="sw b-c"></span>受限 LMS（式 22）</th><th><span class="sw b-fb"></span>梯度投影法（式 31）</th></tr>
+    <tr><th>項目</th><th><span class="sw b-c"></span>約束 LMS（式 22）</th><th><span class="sw b-fb"></span>梯度投影法（式 31）</th></tr>
     <tr><td>每步做什麼</td><td>走一步、投影到約束子空間、加回 F</td><td>把投影後的梯度加到 W(k)，假設 W(k) 已滿足約束</td></tr>
     <tr><td>輸出功率</td><td>收斂到最佳值加失調量</td><td>200 次內幾乎相同</td></tr>
     <tr><td>捨入誤差</td><td>每步被拉回約束平面，不累積</td><td>沿平面平行移動，像隨機漫步累積</td></tr>
     <tr><td>需要的先驗</td><td colspan="2">只要看向方向與想要的頻率響應；訊號與雜訊的統計都不需要</td></tr>
   </table></div>
-  <p>兩個演算法的差別只是式 (19) 最後一項 C(C<sup>T</sup>C)<sup>−1</sup>[𝓕 − C<sup>T</sup>W(k)]：完美算術下它是零，可以丟掉；數位實作下它就是自我修正，所以受限 LMS 可以無限期運行。</p>
+  <p>兩個演算法的差別只是式 (19) 最後一項 C(C<sup>T</sup>C)<sup>−1</sup>[𝓕 − C<sup>T</sup>W(k)]：完美算術下它是零，可以丟掉；數位實作下它就是自我修正，所以約束 LMS 可以無限期運行。</p>
   <p>和論文對照的數字：特徵值 0.111–8.356（論文 0.111–8.355）、μ = 0.01 時失調量界 15.5–17.0 %（論文 15.2–17.0 %）、最佳輸出功率 2.495（論文 Fig. 11 讀圖約 2.5）。唯一對不上的是式 (26) 的 μ 上界：論文寫 0.074，代入論文自己的數字只得到 0.047；0.074 恰好等於 2/tr(PR<sub>xx</sub>P)，推測是原文計算時漏掉了分母的 σ<sub>max</sub>，不影響結論。</p>
 </section>
 
@@ -602,7 +602,7 @@ let run = null;
 function runAdapt() { run = adapt(S, state.fv, state.mu, state.Nad, state.digits, state.seed); drawAdapt(); }
 const clean = a => a.map(v => Number.isFinite(v) ? Math.min(v, 1e9) : 1e9);   // a diverged run must not break the SVG path
 // both algorithms on one chart: constrained LMS solid, gradient projection dashed on top (the gaps show the solid line underneath)
-const seriesCG = (yc, yg) => [{ name: '受限 LMS（Fig. 11，實線）', tipName: '受限 LMS', c: 'c', xs: range(0, 1, state.Nad), ys: yc, w: 2.2 },
+const seriesCG = (yc, yg) => [{ name: '約束 LMS（Fig. 11，實線）', tipName: '約束 LMS', c: 'c', xs: range(0, 1, state.Nad), ys: yc, w: 2.2 },
   { name: '梯度投影法（Fig. 12，虛線）', tipName: '梯度投影法', c: 'fb', xs: range(0, 1, state.Nad), ys: yg, w: 1.6, dash: true }];
 function drawAdapt() {
   const Nad = state.Nad, ok = boundsOk(), paperX = Nad === 200;
@@ -630,7 +630,7 @@ function drawAdapt() {
     yFmt: t => Math.abs(t - top) < 1e-9 ? (e ? p10(top, e) : String(+top.toPrecision(3))) : (t === 0 ? '0' : ''), xLabel: '更新次數 k', yLabel: '‖C<tspan dy="-5" font-size="9">T</tspan><tspan dy="5">W(k) − 𝓕‖</tspan><tspan dy="-5" font-size="9">2</tspan>', xName: 'k',
     yTip: v => sci(v * u), series: seriesCG(Ec.map(v => v / u), Eg.map(v => v / u)) });
   const tail = a => { const s = a.slice(Nad - 49); return s.reduce((x, y) => x + y, 0) / s.length; };
-  $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影法</th></tr>` +
+  $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>約束 LMS</th><th><span class="sw b-fb"></span>梯度投影法</th></tr>` +
     `<tr><td>最後 50 次平均輸出功率</td><td>${diverged ? '發散' : tail(Pc).toFixed(3)}</td><td>${diverged ? '發散' : tail(Pg).toFixed(3)}</td></tr>` +
     `<tr><td>最佳值（實線）</td><td colspan="2">${S.Popt.toFixed(3)}</td></tr>` +
     `<tr><td>失調量上下界（虛線）</td><td colspan="2">${ok ? `${(S.Popt * (1 + B.Mlo)).toFixed(3)} – ${(S.Popt * (1 + B.Mhi)).toFixed(3)}` : '—（μ 超過式 26）'}</td></tr>` +

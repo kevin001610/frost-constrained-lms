@@ -11,7 +11,7 @@
 :root{
   --bg:#f2f5f7; --surface:#ffffff; --ink:#14212c; --ink2:#465868; --muted:#718292; --line:#d6dee5;
   --accent:#0b6e7a; --accent-soft:#dff0f1; --code-bg:#eaeff3; --good:#17754a; --bad:#b93a2c;
-  --s-raw:#7b808a; --s-f:#2a78d6; --s-fb:#eb6834; --s-c:#0e9e8e;
+  --s-raw:#7b808a; --s-f:#2a78d6; --s-fb:#eb6834; --s-c:#0e9e8e; --s-3:#b07212; --s-4:#c4446f;
   --display:"Noto Serif TC","Songti TC","PMingLiU",serif;
   --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -19,11 +19,11 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0e151c; --surface:#16202a; --ink:#e7edf2; --ink2:#b4c1cd; --muted:#8495a4; --line:#2a3845;
   --accent:#5fc5d0; --accent-soft:#15323a; --code-bg:#111a22; --good:#56c48d; --bad:#f08273;
-  --s-raw:#9aa1ab; --s-f:#3987e5; --s-fb:#d95926; --s-c:#2ec4b6; color-scheme:dark } }
+  --s-raw:#9aa1ab; --s-f:#3987e5; --s-fb:#d95926; --s-c:#2ec4b6; --s-3:#e2a33e; --s-4:#e77fa3; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0e151c; --surface:#16202a; --ink:#e7edf2; --ink2:#b4c1cd; --muted:#8495a4; --line:#2a3845;
   --accent:#5fc5d0; --accent-soft:#15323a; --code-bg:#111a22; --good:#56c48d; --bad:#f08273;
-  --s-raw:#9aa1ab; --s-f:#3987e5; --s-fb:#d95926; --s-c:#2ec4b6; color-scheme:dark }
+  --s-raw:#9aa1ab; --s-f:#3987e5; --s-fb:#d95926; --s-c:#2ec4b6; --s-3:#e2a33e; --s-4:#e77fa3; color-scheme:dark }
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -122,6 +122,10 @@ td{font-family:var(--mono)} td:first-child{font-family:var(--body)}
 .fvec{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;font-family:var(--mono);font-size:14px}
 .status{font-size:13px;color:var(--ink2);font-family:var(--body)}
 .status .warn{color:var(--bad)}
+.sumfig svg{display:block;width:100%;height:auto}
+.sumfig text{font-family:var(--body);font-size:12px;fill:var(--ink2)}
+.sumfig .mu{fill:var(--muted)}
+.sumfig .ax{stroke:var(--line)}
 .tbl-src th:first-child,.tbl-src td:first-child{text-align:left}
 .tbl-sum th,.tbl-sum td{text-align:left;white-space:normal}
 .tbl-sum td{font-family:var(--body)}
@@ -157,9 +161,9 @@ section{scroll-margin-top:16px}
 </header>
 
 <section class="intro">
-  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁只重現論文 Sec. VII 做過的模擬，圖也只畫論文有的：Table I、Fig. 9、Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11（受限 LMS）與 Fig. 12（梯度投影法）。</p>
+  <p class="lead">Frost 的受限 LMS 處理的是這件事：訊號的方向已知、干擾的方向與統計未知，怎麼讓一列感測器即時學會壓低干擾，又不動到想要的訊號。這一頁先用一張示意圖說明約束為什麼能鎖住看向方向，接著只重現論文 Sec. VII 做過的模擬：Table I、Fig. 9、Fig. 10、文中的特徵值、μ 上界與失調量，以及 Fig. 11（受限 LMS）與 Fig. 12（梯度投影法）。</p>
   <nav class="toc" aria-label="章節">
-    <a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
+    <a href="#sec-lock">約束為什麼鎖得住</a><a href="#sec-rxx">Table I 與 Fig. 10</a><a href="#sec-opt">Fig. 9 與性能界</a><a href="#sec-adapt">Fig. 11、Fig. 12</a><a href="#sec-sum">整理</a>
   </nav>
 </section>
 
@@ -187,6 +191,34 @@ section{scroll-margin-top:16px}
     </div>
   </div>
   <p class="note">本頁用 JavaScript 重新實作程式的運算。亂數產生器與 MATLAB 的 <code>rng(2026)</code> 不同，而且迭代這裡用的是直接由 R<sub>xx</sub> 抽出的獨立高斯快照（論文假設相鄰兩次更新的間隔大於 58τ，快照彼此不相關），所以曲線的細節會和 MATLAB 跑出來的不同，數值與結論一致。</p>
+</section>
+
+<section id="sec-lock">
+  <div class="step">原理 · 論文 Sec. II</div>
+  <h2>為什麼固定每一直行的權重和，就能鎖住看向方向</h2>
+  <p>陣列已經事先對準看向方向（0°）。從這個方向進來的訊號，會同時到達每一個感測器，所以同一個抽頭位置（同一直行）的 K 個感測器看到的是一模一樣的波形。把它們各乘上權重再相加，等於把同一個波形乘上「權重的和」：</p>
+  <div class="math"><i>w</i><sub>1</sub><i>x</i>(<i>t</i>) + <i>w</i><sub>2</sub><i>x</i>(<i>t</i>) + <i>w</i><sub>3</sub><i>x</i>(<i>t</i>) + <i>w</i><sub>4</sub><i>x</i>(<i>t</i>) = (<i>w</i><sub>1</sub> + <i>w</i><sub>2</sub> + <i>w</i><sub>3</sub> + <i>w</i><sub>4</sub>) <i>x</i>(<i>t</i>)</div>
+  <p>所以訊號只看得到權重的和，看不到權重怎麼分配。下圖是一直行 4 個感測器的情形，權重的和固定為 1：</p>
+  <div class="panel sumfig">
+    <div class="controls">
+      <label class="ctl" for="lw1"><span class="row"><span>w₁</span><output id="lw1o"></output></span><input type="range" id="lw1" min="-1" max="1.5" step="0.05" value="0.7"></label>
+      <label class="ctl" for="lw2"><span class="row"><span>w₂</span><output id="lw2o"></output></span><input type="range" id="lw2" min="-1" max="1.5" step="0.05" value="-0.3"></label>
+      <label class="ctl" for="lw3"><span class="row"><span>w₃</span><output id="lw3o"></output></span><input type="range" id="lw3" min="-1" max="1.5" step="0.05" value="0.4"></label>
+      <label class="ctl" for="lth"><span class="row"><span>來波方向 θ</span><output id="ltho"></output></span><input type="range" id="lth" min="0" max="60" step="1" value="0"></label>
+    </div>
+    <div class="status" id="lw4"></div>
+    <div class="two">
+      <svg id="lfa" viewBox="0 0 330 200" role="img" aria-label="四個感測器收到的波形"></svg>
+      <svg id="lfb" viewBox="0 0 330 200" role="img" aria-label="各乘上權重後的四個波形"></svg>
+      <svg id="lfc" viewBox="0 0 330 150" role="img" aria-label="四個波形相加的輸出"></svg>
+      <svg id="lfd" viewBox="0 0 330 150" role="img" aria-label="輸出頻譜"></svg>
+    </div>
+    <p class="cap" id="lcap"></p>
+    <p class="cap">w₄ 自動等於 1 − w₁ − w₂ − w₃，代表一條約束。θ = 0° 時，② 的四個波形形狀相同、只差高低，加起來永遠是 1 倍的原波形，所以 ③ 的輸出和 ④ 的頻譜都和灰線（四個權重各 0.25）重合，不論滑桿怎麼拉。把 θ 拉開，四個波形在時間上錯開，相加時會互相抵消或疊加，結果取決於權重的分配：這些方向的響應，就是演算法可以拿來壓雜訊的自由度。這張是說明用的示意圖，訊號用的是一個寬頻脈波，不是論文的模擬。</p>
+  </div>
+  <p>Frost 的陣列每個感測器後面還接了 J 個抽頭。對 0° 的訊號，第 j 直行的 K 個抽頭都看到 x(t − (j−1)τ)，上面的道理對每一直行各成立一次，所以看向方向的輸出是一條以直行和 f<sub>j</sub> 為係數的 FIR 濾波器：</p>
+  <div class="math"><i>y</i>(<i>t</i>) = <i>f</i><sub>1</sub><i>x</i>(<i>t</i>) + <i>f</i><sub>2</sub><i>x</i>(<i>t</i> − τ) + … + <i>f<sub>J</sub></i><i>x</i>(<i>t</i> − (<i>J</i>−1)τ)，　<i>f<sub>j</sub></i> = 第 <i>j</i> 直行的權重和</div>
+  <p>J 條約束 C<sup>T</sup>W = 𝓕 把這 J 個係數全部固定，看向方向的頻率響應就被鎖住（論文 Fig. 9）。16 個權重扣掉 4 條約束，剩下 12 個自由度，全部用來壓其他方向的雜訊。這個做法成立的前提是雜訊和訊號不相關（論文式 (3)）；多路徑反射是訊號自己的複本，會讓演算法拿反射去抵消訊號。</p>
 </section>
 
 <section id="sec-rxx">
@@ -632,6 +664,43 @@ let rz = null;
 new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => charts.forEach(c => c.draw()), 80); }).observe(document.querySelector('.wrap'));
 
 recompute(); drawSetup(); runAdapt();
+
+/* ---- 示意圖：一直行 4 個感測器，權重和固定為 1 ---- */
+(function () {
+  const C = ['var(--s-f)', 'var(--s-c)', 'var(--s-3)', 'var(--s-4)'], L = 40, R = 322, ts = range(-2, 7 / 260, 5);
+  const rk = t => { const a = (Math.PI * 0.9 * t) ** 2; return (1 - 2 * a) * Math.exp(-a); };
+  const X = v => L + (v + 2) / 7 * (R - L), pth = (a, mid, sc) => a.map((v, i) => (i ? 'L' : 'M') + X(ts[i]).toFixed(1) + ' ' + (mid - v * sc).toFixed(1)).join('');
+  const sub = '₁₂₃₄';
+  function rows(id, title, arr, labels, plus) {
+    let h = `<text x="${L}" y="12">${title}</text>`;
+    arr.forEach((a, k) => { const mid = 38 + k * 42;
+      h += `<text x="${L - 6}" y="${mid + 4}" text-anchor="end" style="fill:${C[k]}">${labels[k]}</text><line class="ax" x1="${L}" x2="${R}" y1="${mid}" y2="${mid}"/><path d="${pth(a, mid, 15)}" fill="none" style="stroke:${C[k]}" stroke-width="1.6"/>`;
+      if (plus && k < 3) h += `<text class="mu" x="${R - 2}" y="${mid + 26}" text-anchor="end" style="font-size:14px">+</text>`; });
+    $(id).innerHTML = h;
+  }
+  function drawLock() {
+    const w = ['lw1', 'lw2', 'lw3'].map(id => +$(id).value); w.push(1 - w[0] - w[1] - w[2]);
+    ['lw1', 'lw2', 'lw3'].forEach((id, i) => $(id + 'o').textContent = fmt(w[i], 2));
+    $('lw4').textContent = `w₄ = 1 − w₁ − w₂ − w₃ = ${fmt(w[3], 2)}（約束：四個權重的和固定為 1）`;
+    const th = +$('lth').value, d = Math.sin(th * D2R) * 0.8; $('ltho').textContent = th + '°';
+    const x = [0, 1, 2, 3].map(k => ts.map(t => rk(t - k * d))), wx = x.map((a, k) => a.map(v => w[k] * v));
+    const y = ts.map((_, i) => wx.reduce((s, a) => s + a[i], 0)), yr = ts.map((_, i) => x.reduce((s, a) => s + 0.25 * a[i], 0));
+    rows('lfa', '① 四個感測器收到的波形 xₖ', x, [1, 2, 3, 4].map(k => 'x' + sub[k - 1]), false);
+    rows('lfb', '② 各乘上權重 wₖxₖ，再相加', wx, [1, 2, 3, 4].map(k => 'w' + sub[k - 1] + 'x' + sub[k - 1]), true);
+    $('lfc').innerHTML = `<text x="${L}" y="12">③ 相加的結果 y = w₁x₁ + w₂x₂ + w₃x₃ + w₄x₄</text><line class="ax" x1="${L}" x2="${R}" y1="80" y2="80"/>` +
+      `<path d="${pth(yr, 80, 40)}" fill="none" style="stroke:var(--muted)" stroke-width="3"/><path d="${pth(y, 80, 40)}" fill="none" style="stroke:var(--s-fb)" stroke-width="1.8"/>` +
+      `<text x="${R - 2}" y="30" text-anchor="end" style="fill:var(--s-fb)">目前權重</text><text class="mu" x="${R - 2}" y="46" text-anchor="end">各 0.25（灰）</text><text x="${(L + R) / 2}" y="146" text-anchor="middle">時間（相對單位）</text>`;
+    const fs = range(0, 0.01, 2), S = f => { const a = (f / 0.9) ** 2; return a * Math.exp(-a); };
+    const Y = ww => fs.map(f => { let re = 0, im = 0; ww.forEach((wk, k) => { re += wk * Math.cos(TWO_PI * f * k * d); im -= wk * Math.sin(TWO_PI * f * k * d); }); return S(f) * Math.hypot(re, im); });
+    const ys = Y(w), yrs = Y([0.25, 0.25, 0.25, 0.25]), mx = Math.max(...ys, ...yrs, 0.01), B = 124, T = 22, Xf = f => L + f / 2 * (R - L), Yf = v => B - v / mx * (B - T);
+    const pf = a => a.map((v, i) => (i ? 'L' : 'M') + Xf(fs[i]).toFixed(1) + ' ' + Yf(v).toFixed(1)).join('');
+    $('lfd').innerHTML = `<text x="${L}" y="12">④ 輸出頻譜 |Y(f)|</text><line class="ax" x1="${L}" x2="${R}" y1="${B}" y2="${B}"/><line class="ax" x1="${L}" x2="${L}" y1="${T}" y2="${B}"/>` +
+      `<path d="${pf(yrs)}" fill="none" style="stroke:var(--muted)" stroke-width="3"/><path d="${pf(ys)}" fill="none" style="stroke:var(--s-fb)" stroke-width="1.8"/><text x="${(L + R) / 2}" y="146" text-anchor="middle">頻率（相對單位）</text>`;
+    $('lcap').innerHTML = th === 0 ? '<span class="ok">θ = 0°：四個波形一模一樣，輸出只看權重的和，橘線永遠和灰線重合。</span>' : `θ = ${th}°：四個波形依序錯開，權重怎麼分配會改變輸出，橘線和灰線不同。`;
+  }
+  ['lw1', 'lw2', 'lw3', 'lth'].forEach(id => $(id).addEventListener('input', drawLock));
+  drawLock();
+})();
 </script>
 
 </body>

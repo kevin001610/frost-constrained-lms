@@ -287,22 +287,19 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
     <div class="controls"><button type="button" class="btn" id="reseed">換一組資料重跑</button><button type="button" class="btn" id="resetA">回到論文設定</button><span class="status" id="simSt"></span></div>
     <p class="cap">預設值就是論文的設定：6 位有效數字的浮點算術（HP-2116）、μ = 0.01、W(0) = F、200 次更新；兩種演算法吃完全相同的一組資料。</p>
   </div>
-  <div class="two">
-    <div class="panel">
-      <h3>Fig. 11　受限 LMS</h3>
-      <div class="sub-t">輸出功率</div><div id="chPowC"></div>
-      <div class="sub-t">約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup></div><div id="chErrC"></div>
-    </div>
-    <div class="panel">
-      <h3>Fig. 12　梯度投影法</h3>
-      <div class="sub-t">輸出功率</div><div id="chPowG"></div>
-      <div class="sub-t">約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup><span id="errGT"></span></div><div id="chErrG"></div>
-    </div>
+  <div class="panel">
+    <h3>輸出功率（Fig. 11、Fig. 12 上圖）</h3>
+    <div id="chPow"></div>
+  </div>
+  <div class="panel">
+    <h3>約束誤差 ‖C<sup>T</sup>W(k) − 𝓕‖<sup>2</sup>（Fig. 11、Fig. 12 下圖）</h3>
+    <div class="seg" data-seg><button type="button" data-esc="g">Fig. 12 刻度（看梯度投影法）</button><button type="button" data-esc="c">Fig. 11 刻度（放大看受限 LMS）</button></div>
+    <div id="chErr"></div>
   </div>
   <div class="panel">
     <div class="scroll"><table id="tbAdapt"></table></div>
-    <p class="cap">上圖和論文一樣有三條水平線：實線是最佳輸出功率，兩條虛線是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩張上圖幾乎相同，因為 200 次內梯度投影法累積的誤差還很小。</p>
-    <p class="cap">在論文的 6 位數設定下，下圖的縱軸差了 10 倍（6×10<sup>−11</sup> 與 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
+    <p class="cap">受限 LMS 畫實線、梯度投影法畫虛線疊在上面，兩者吃同一組資料。功率圖和論文一樣有三條水平線：白色實線是最佳輸出功率，兩條白色虛線是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩條功率曲線幾乎重合（虛線的空隙裡看得到實線），因為 200 次內梯度投影法累積的約束誤差還很小，論文 Fig. 11、Fig. 12 的上圖也幾乎一樣。</p>
+    <p class="cap">論文兩張下圖的縱軸差了 10 倍（Fig. 11 是 6×10<sup>−11</sup>，Fig. 12 是 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。誤差圖可以在這兩個刻度間切換：用 Fig. 12 的刻度，受限 LMS 的實線幾乎貼在零上；換成 Fig. 11 的刻度才看得到它，這時梯度投影法的虛線早已衝出圖外。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
   </div>
   <details><summary>對照程式：受限 LMS 與梯度投影法的主迴圈</summary>
 <pre>W = q(S.F);                              <span class="c">% W(0) = F；q() 把每個值捨入到 6 位有效數字</span>
@@ -465,7 +462,7 @@ const sci = v => { if (!(v > 0)) return '0'; let e = Math.floor(Math.log10(v)), 
 // the paper's simulation (Sec. VII): Table I, F = [1, -2, 1.5, 2], mu = 0.01, 6 significant digits, 200 adaptations
 const PAPER = { fv: [1, -2, 1.5, 2], mu: 0.01, pw: 0.1, digits: 6, Nad: 200, src: SRC.map(s => ({ P: s.P, th: s.th, fc: s.fc, B: s.B })) };
 // everything the reader can change; defaults are the paper's settings
-const state = { seed: 2026, fv: PAPER.fv.slice(), mu: PAPER.mu, pw: PAPER.pw, digits: PAPER.digits, Nad: PAPER.Nad };
+const state = { seed: 2026, fv: PAPER.fv.slice(), mu: PAPER.mu, pw: PAPER.pw, digits: PAPER.digits, Nad: PAPER.Nad, esc: 'g' };
 
 /* ---- small SVG line chart with legend + hover readout ---- */
 const charts = [];
@@ -566,34 +563,35 @@ function drawPsd() {
 }
 
 /* ---- adapt: Fig. 11 (constrained LMS) and Fig. 12 (gradient projection), each power on top and constraint error below ---- */
-const chPowC = new Chart($('chPowC')), chErrC = new Chart($('chErrC')), chPowG = new Chart($('chPowG')), chErrG = new Chart($('chErrG'));
+const chPow = new Chart($('chPow')), chErr = new Chart($('chErr'));
 let run = null;
 function runAdapt() { run = adapt(S, state.fv, state.mu, state.Nad, state.digits, state.seed); drawAdapt(); }
 const clean = a => a.map(v => Number.isFinite(v) ? Math.min(v, 1e9) : 1e9);   // a diverged run must not break the SVG path
+// both algorithms on one chart: constrained LMS solid, gradient projection dashed on top (the gaps show the solid line underneath)
+const seriesCG = (yc, yg) => [{ name: '受限 LMS（Fig. 11，實線）', tipName: '受限 LMS', c: 'c', xs: range(0, 1, state.Nad), ys: yc, w: 2.2 },
+  { name: '梯度投影法（Fig. 12，虛線）', tipName: '梯度投影法', c: 'fb', xs: range(0, 1, state.Nad), ys: yg, w: 1.6, dash: true }];
 function drawAdapt() {
-  const Nad = state.Nad, xs = range(0, 1, Nad), xt = range(0, Nad / 4, Nad), ok = boundsOk();
+  const Nad = state.Nad, xt = range(0, Nad / 4, Nad), ok = boundsOk();
   $('muo').textContent = state.mu.toFixed(3); $('nado').textContent = Nad;
   document.querySelectorAll('[data-dig]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.dig === state.digits)));
+  document.querySelectorAll('[data-esc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.esc === state.esc)));
   const Pc = clean(run.Pc), Pg = clean(run.Pg), diverged = Pc.slice(-20).some(v => v > 100 * S.PF);
   const pax = niceAxis(Math.min(Math.max(...Pc.slice(0, 20), ...Pg.slice(0, 20), S.PF) * 1.15, 20 * S.PF));
   const hl = [{ y: S.Popt, cls: 'opt' }]; if (ok) hl.push({ y: S.Popt * (1 + B.Mlo), cls: 'thr' }, { y: S.Popt * (1 + B.Mhi), cls: 'thr' });
-  const powCfg = (c, ys, name) => ({ title: name + ' 輸出功率', x: [0, Nad], y: [0, pax.top], xTicks: xt, yTicks: range(0, pax.step, pax.top), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3, h: 200, ml: 42,
-    hlines: hl, series: [{ tipName: name, c, xs, ys }] });
-  // constraint error. Paper setting (6 digits): the paper's linear scales, 6e-11 and 60e-11. Otherwise: automatic scale.
-  const Ec = clean(run.Ec), Eg = clean(run.Eg);
-  const errCfg = (ys, c, name, paperTop) => {
-    let u, top, step;
-    if (state.digits === 6) { u = 1e-11; top = Math.max(paperTop, Math.ceil(Math.max(...ys) / u / (paperTop / 6)) * (paperTop / 6)); step = top / 6; }
-    else { const mx = Math.max(...ys); u = mx > 0 ? 10 ** Math.floor(Math.log10(mx)) : 1; const a = niceAxis(mx / u, 1); top = a.top; step = a.step; }
-    const e = Math.round(Math.log10(u));
-    return { title: name + ' 約束誤差', x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, step, top), xLabel: '更新次數 k', yLabel: e ? `單位 10${sup(e)}` : '‖CᵀW − 𝓕‖²', xName: 'k', h: 200, ml: 42,
-      yTip: v => sci(v * u), series: [{ tipName: name, c, xs, ys: ys.map(v => v / u) }] };
-  };
-  chPowC.set(powCfg('c', Pc, '受限 LMS')); chErrC.set(errCfg(Ec, 'c', '受限 LMS', 6));
-  chPowG.set(powCfg('fb', Pg, '梯度投影法')); chErrG.set(errCfg(Eg, 'fb', '梯度投影法', 60));
-  $('errGT').textContent = state.digits === 6 ? '（刻度放大 10 倍，同論文）' : '（自動刻度）';
+  const legendRef = [{ name: `最佳值 ${S.Popt.toFixed(2)}`, c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true }];
+  if (ok) legendRef.push({ name: '最佳值 ×（1 + 失調量界）', c: 'ink', xs: [], ys: [], w: 1, dash: true, legendOnly: true });
+  chPow.set({ title: '輸出功率', x: [0, Nad], y: [0, pax.top], xTicks: xt, yTicks: range(0, pax.step, pax.top), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3,
+    hlines: hl, series: seriesCG(Pc, Pg).concat(legendRef) });
+  // constraint error on one chart. 6 digits: the paper's linear scales (Fig. 12: 60e-11, Fig. 11: 6e-11); otherwise automatic.
+  const Ec = clean(run.Ec), Eg = clean(run.Eg), ref = state.esc === 'g' ? Eg : Ec;
+  let u, top, step;
+  if (state.digits === 6) { const pt = state.esc === 'g' ? 60 : 6; u = 1e-11; top = Math.max(pt, Math.ceil(Math.max(...ref) / u / (pt / 6)) * (pt / 6)); step = top / 6; }
+  else { const mx = Math.max(...ref); u = mx > 0 ? 10 ** Math.floor(Math.log10(mx)) : 1; const a = niceAxis(mx / u, 1); top = a.top; step = a.step; }
+  const e = Math.round(Math.log10(u));
+  chErr.set({ title: '約束誤差', x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, step, top), xLabel: '更新次數 k', yLabel: e ? `單位 10${sup(e)}` : '‖CᵀW − 𝓕‖²', xName: 'k',
+    yTip: v => sci(v * u), series: seriesCG(Ec.map(v => v / u), Eg.map(v => v / u)) });
   const tail = a => { const s = a.slice(Nad - 49); return s.reduce((x, y) => x + y, 0) / s.length; };
-  $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>Fig. 11</th><th><span class="sw b-fb"></span>Fig. 12</th></tr>` +
+  $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影法</th></tr>` +
     `<tr><td>最後 50 次平均輸出功率</td><td>${diverged ? '發散' : tail(Pc).toFixed(3)}</td><td>${diverged ? '發散' : tail(Pg).toFixed(3)}</td></tr>` +
     `<tr><td>最佳值（實線）</td><td colspan="2">${S.Popt.toFixed(3)}</td></tr>` +
     `<tr><td>失調量上下界（虛線）</td><td colspan="2">${ok ? `${(S.Popt * (1 + B.Mlo)).toFixed(3)} – ${(S.Popt * (1 + B.Mhi)).toFixed(3)}` : '—（μ 超過式 26）'}</td></tr>` +
@@ -620,6 +618,7 @@ $('resetF').addEventListener('click', () => { PAPER.fv.forEach((v, i) => $('f' +
 $('mu').addEventListener('input', e => { state.mu = +e.target.value; B = bounds(S, state.mu); drawTiles(); runAdapt(); });
 $('nad').addEventListener('input', e => { state.Nad = +e.target.value; runAdapt(); });
 document.querySelectorAll('[data-dig]').forEach(b => b.addEventListener('click', () => { state.digits = +b.dataset.dig; runAdapt(); }));
+document.querySelectorAll('[data-esc]').forEach(b => b.addEventListener('click', () => { state.esc = b.dataset.esc; drawAdapt(); }));
 $('reseed').addEventListener('click', () => { state.seed = (state.seed * 1664525 + 1013904223) >>> 0; runAdapt(); });
 $('resetA').addEventListener('click', () => { Object.assign(state, { mu: PAPER.mu, Nad: PAPER.Nad, digits: PAPER.digits, seed: 2026 }); $('mu').value = PAPER.mu; $('nad').value = PAPER.Nad; B = bounds(S, state.mu); drawTiles(); runAdapt(); });
 let rz = null;

@@ -216,7 +216,7 @@ section{scroll-margin-top:16px}
   <div class="panel">
     <h3>R<sub>xx</sub> 的特徵值範圍</h3>
     <div class="tiles" id="tilesR"></div>
-    <p class="cap">論文：「the eigenvalues of R<sub>xx</sub> ranged from 0.111 to 8.355」。用論文的 Table I 重建，兩端都對上了，這也是相關函數形式可以採用三角窗模型的依據。</p>
+    <p class="cap">論文：「the eigenvalues of R<sub>xx</sub> ranged from 0.111 to 8.355」。用論文的 Table I 重建得到 0.1110 與 8.3556，取三位小數並捨去尾數就是論文的 0.111 與 8.355（論文的 0.074 也是 0.0746 捨去尾數，寫法一致）。兩端都對上，這也是相關函數可以採用三角窗模型的依據。</p>
   </div>
   <details><summary>對照程式：相關函數與 R<sub>xx</sub></summary>
 <pre>function r = frost1972_acf(t, fc, B, Tc)
@@ -540,7 +540,8 @@ function recompute() { S = setup({ win: true, pw: state.pw, fv: state.fv }); B =
 function drawSetup() {
   const lam = S.lambda, p = srcIsPaper();
   $('srcSt').innerHTML = p ? '✓ 論文的 Table I' : '<span class="warn">已改動 Table I（不是論文的設定）</span>';
-  $('tilesR').innerHTML = tile('最小特徵值 λ<sub>min</sub>', lam[0].toFixed(3), p ? '論文 0.111' : '論文設定下 0.111') + tile('最大特徵值 λ<sub>max</sub>', lam[N - 1].toFixed(3), p ? '論文 8.355' : '論文設定下 8.355');
+  // four decimals: the paper's 0.111 and 8.355 are these values cut to three decimals (8.3556 would round to 8.356)
+  $('tilesR').innerHTML = tile('最小特徵值 λ<sub>min</sub>', lam[0].toFixed(4), p ? '論文 0.111' : '論文設定下 0.1110') + tile('最大特徵值 λ<sub>max</sub>', lam[N - 1].toFixed(4), p ? '論文 8.355（取三位、捨去尾數）' : '論文設定下 8.3556');
   const fs = range(0, 0.0025, 0.5), fv = state.fv;
   const H2 = fs.map(f => { let re = 0, im = 0; for (let j = 0; j < J; j++) { re += fv[j] * Math.cos(TWO_PI * f * j); im -= fv[j] * Math.sin(TWO_PI * f * j); } return re * re + im * im; });
   const ax = niceAxis(Math.max(...H2) * 1.1);

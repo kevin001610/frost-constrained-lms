@@ -211,7 +211,7 @@ section{scroll-margin-top:16px}
   <div class="panel">
     <h3>入射訊號的功率頻譜（對照論文 Fig. 10）</h3>
     <div id="chPsd"></div>
-    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；虛線是每個抽頭上白雜訊的功率位準。訊號只有 0.1 的功率，和論文一樣幾乎貼在橫軸上，頻帶落在 0.25–0.35。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 的形狀一致。</p>
+    <p class="cap">三個源的功率頻譜，由上式做餘弦轉換得到；座標軸和論文 Fig. 10 一樣，縱軸是線性功率、不標數值（游標移到圖上可讀數）。訊號只有 0.1 的功率，和論文一樣幾乎貼在橫軸上，頻帶落在 0.25–0.35。三角窗讓頻譜的邊緣變圓、裙邊抬高，這和論文 Fig. 10 的形狀一致。</p>
   </div>
   <div class="panel">
     <h3>R<sub>xx</sub> 的特徵值範圍</h3>
@@ -298,7 +298,7 @@ S.M_hi = (mu/2)*trace(PRP) / (1 - (mu/2)*(trace(PRP) + 2*max(S.sigma)));</pre></
   </div>
   <div class="panel">
     <div class="scroll"><table id="tbAdapt"></table></div>
-    <p class="cap">受限 LMS 畫實線、梯度投影法畫虛線疊在上面，兩者吃同一組資料。功率圖和論文一樣有三條水平線：白色實線是最佳輸出功率，兩條白色虛線是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩條功率曲線幾乎重合（虛線的空隙裡看得到實線），因為 200 次內梯度投影法累積的約束誤差還很小，論文 Fig. 11、Fig. 12 的上圖也幾乎一樣。</p>
+    <p class="cap">受限 LMS 畫實線、梯度投影法畫虛線疊在上面，兩者吃同一組資料。功率圖的座標軸和論文一樣（縱軸 0–7、橫軸 0–200），也有三條水平實線：最下面一條是最佳輸出功率，上面靠得很近的兩條是最佳值加上式 (27) 的失調量上下界（論文：「The mean steady-state value ... falls somewhere between the upper and lower bounds」）。初始與穩態之間的落差，就是處理器從輸出移除的雜訊功率。兩條功率曲線幾乎重合（虛線的空隙裡看得到實線），因為 200 次內梯度投影法累積的約束誤差還很小，論文 Fig. 11、Fig. 12 的上圖也幾乎一樣。</p>
     <p class="cap">論文兩張下圖的縱軸差了 10 倍（Fig. 11 是 6×10<sup>−11</sup>，Fig. 12 是 60×10<sup>−11</sup>），Fig. 12 圖說特別寫了「Note scale」。誤差圖可以在這兩個刻度間切換：用 Fig. 12 的刻度，受限 LMS 的實線幾乎貼在零上；換成 Fig. 11 的刻度才看得到它，這時梯度投影法的虛線早已衝出圖外。受限 LMS 每一步都加回 F，捨入造成的偏差在下一步就被拉回約束平面，所以誤差停在單一步捨入的大小；梯度投影法假設 W(k) 已經在約束平面上，偏差沒有被修正，會一步步累積。</p>
   </div>
   <details><summary>對照程式：受限 LMS 與梯度投影法的主迴圈</summary>
@@ -479,10 +479,12 @@ class Chart {
     const id = 'cp' + charts.indexOf(this), yl = c.yFmt || (t => String(t).replace('-', '−'));
     let s = c.series.some(q => q.name) ? '<div class="legend">' + c.series.filter(q => q.name).map(q => `<span><svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" class="c-${q.c}" stroke-width="${q.w || 2}"${q.dash ? ' stroke-dasharray="5 3"' : ''}/></svg>${q.name}</span>`).join('') + '</div>' : '';
     s += `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${c.title}"><defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t - 2}" width="${pw}" height="${ph + 2}"/></clipPath></defs>`;
-    for (const t of c.yTicks) s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${m.l - 6}" y="${Y(t) + 4}" text-anchor="end">${yl(t)}</text>`;
-    const skip = pw / c.xTicks.length < 36 ? 2 : 1;
-    c.xTicks.forEach((t, i) => { if (i % skip === 0) s += `<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${m.t + ph}" y2="${m.t + ph + 4}"/><text x="${X(t)}" y="${m.t + ph + 16}" text-anchor="middle">${String(t).replace('-', '−')}</text>`; });
-    s += `<line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${m.t + ph}" y2="${m.t + ph}"/>`;
+    // axes drawn like the paper's figures: left and bottom axis lines with short tick marks, no grid
+    for (const t of c.yTicks) s += (c.grid ? `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}"/>` : '') + `<line class="axis" x1="${m.l - 4}" x2="${m.l}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${m.l - 7}" y="${Y(t) + 4}" text-anchor="end">${yl(t)}</text>`;
+    for (const t of c.xMinor || []) s += `<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${m.t + ph}" y2="${m.t + ph + 3}"/>`;
+    const xl = c.xFmt || (t => String(t).replace('-', '−')), skip = !c.xFmt && pw / c.xTicks.length < 36 ? 2 : 1;
+    c.xTicks.forEach((t, i) => { if (i % skip === 0) s += `<line class="axis" x1="${X(t)}" x2="${X(t)}" y1="${m.t + ph}" y2="${m.t + ph + 5}"/><text x="${X(t)}" y="${m.t + ph + 17}" text-anchor="middle">${xl(t)}</text>`; });
+    s += `<line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${m.t + ph}" y2="${m.t + ph}"/><line class="axis" x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t + ph}"/>`;
     s += `<text class="lab" x="${m.l + pw / 2}" y="${H - 4}" text-anchor="middle">${c.xLabel}</text>`;
     s += `<text class="lab" transform="translate(12 ${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${c.yLabel}</text>`;
     for (const h of c.hlines || []) s += `<line class="${h.cls || 'thr'}" x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}"/>` + (h.label ? `<text class="lab" x="${h.left ? m.l + 6 : W - m.r - 4}" y="${Y(h.y) - 5}" text-anchor="${h.left ? 'start' : 'end'}">${h.label}</text>` : '');
@@ -541,8 +543,8 @@ function drawSetup() {
   $('tilesR').innerHTML = tile('最小特徵值 λ<sub>min</sub>', lam[0].toFixed(4), p ? '論文 0.111' : '論文設定下 0.1110') + tile('最大特徵值 λ<sub>max</sub>', lam[N - 1].toFixed(4), p ? '論文 8.355（取三位、捨去尾數）' : '論文設定下 8.3556');
   const fs = range(0, 0.0025, 0.5), fv = state.fv;
   const H2 = fs.map(f => { let re = 0, im = 0; for (let j = 0; j < J; j++) { re += fv[j] * Math.cos(TWO_PI * f * j); im -= fv[j] * Math.sin(TWO_PI * f * j); } return re * re + im * im; });
-  const ax = niceAxis(Math.max(...H2) * 1.1);
-  chResp.set({ title: '看向方向頻率響應（Fig. 9）', x: [0, 0.5], y: [0, ax.top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: range(0, ax.step, ax.top), xLabel: '頻率（1.0 = 1/τ）', yLabel: '|H(f)|²', xName: 'f', xDigits: 3, yDigits: 2, h: 230,
+  const ax = { top: Math.max(...H2) * 1.15 };   // like the paper's Fig. 9: the curve fills the frame, no y numbers
+  chResp.set({ title: '看向方向頻率響應（Fig. 9）', x: [0, 0.5], y: [0, ax.top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [], ml: 26, xLabel: '頻率（1.0 = 1/τ）', yLabel: '幅度平方 |H(f)|²', xName: 'f', xDigits: 3, yDigits: 2, h: 230,
     series: [{ tipName: '|H(f)|²', c: 'ink', xs: fs, ys: H2 }] });
   drawTiles(); drawPsd();
 }
@@ -556,9 +558,9 @@ function drawTiles() {
     tile('μ 上界（式 26）', B.mu26.toFixed(3), `${paper ? '論文印 0.074' : '論文設定下 0.047，論文印 0.074'}（2/tr(PR<sub>xx</sub>P) = ${(2 / S.trPRP).toFixed(4)}）；μ = ${state.mu.toFixed(3)} ${ok ? '在界內' : '超過'}`, ok ? 'ok' : 'ng');
 }
 function drawPsd() {
-  const fs = range(0, 0.0025, 0.5), spec = SRC.map(s => psd(s, true, fs)), ax = niceAxis(Math.max(...spec.flat(), state.pw) * 1.1);
-  chPsd.set({ title: '功率頻譜（Fig. 10）', x: [0, 0.5], y: [0, ax.top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: range(0, ax.step, ax.top), xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率', xName: 'f', xDigits: 3, yDigits: 2, h: 260,
-    hlines: [{ y: state.pw, label: `白雜訊 ${+state.pw.toFixed(3)}`, cls: 'thr', left: true }],
+  const fs = range(0, 0.0025, 0.5), spec = SRC.map(s => psd(s, true, fs)), top = Math.max(...spec.flat()) * 1.15;
+  // like the paper's Fig. 10: linear power axis without numbers, frequency 0-0.5
+  chPsd.set({ title: '功率頻譜（Fig. 10）', x: [0, 0.5], y: [0, top], xTicks: [0, 0.1, 0.2, 0.3, 0.4, 0.5], yTicks: [], ml: 26, xLabel: '頻率（1.0 = 1/τ）', yLabel: '功率', xName: 'f', xDigits: 3, yDigits: 3, h: 260,
     series: SRC.map((s, i) => ({ name: `${s.name}（${s.th}°）`, c: s.c, xs: fs, ys: spec[i] })) });
 }
 
@@ -571,16 +573,19 @@ const clean = a => a.map(v => Number.isFinite(v) ? Math.min(v, 1e9) : 1e9);   //
 const seriesCG = (yc, yg) => [{ name: '受限 LMS（Fig. 11，實線）', tipName: '受限 LMS', c: 'c', xs: range(0, 1, state.Nad), ys: yc, w: 2.2 },
   { name: '梯度投影法（Fig. 12，虛線）', tipName: '梯度投影法', c: 'fb', xs: range(0, 1, state.Nad), ys: yg, w: 1.6, dash: true }];
 function drawAdapt() {
-  const Nad = state.Nad, xt = range(0, Nad / 4, Nad), ok = boundsOk();
+  const Nad = state.Nad, ok = boundsOk(), paperX = Nad === 200;
+  // the paper's x axis: ticks every 10, numbers 0-100 every 10, then 150 and 200; other N: five evenly spaced labels
+  const xt = paperX ? [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200] : range(0, Nad / 4, Nad), xMinor = paperX ? range(0, 10, 200) : [];
   $('muo').textContent = state.mu.toFixed(3); $('nado').textContent = Nad;
   document.querySelectorAll('[data-dig]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.dig === state.digits)));
   document.querySelectorAll('[data-esc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.esc === state.esc)));
   const Pc = clean(run.Pc), Pg = clean(run.Pg), diverged = Pc.slice(-20).some(v => v > 100 * S.PF);
-  const pax = niceAxis(Math.min(Math.max(...Pc.slice(0, 20), ...Pg.slice(0, 20), S.PF) * 1.15, 20 * S.PF));
-  const hl = [{ y: S.Popt, cls: 'opt' }]; if (ok) hl.push({ y: S.Popt * (1 + B.Mlo), cls: 'thr' }, { y: S.Popt * (1 + B.Mhi), cls: 'thr' });
+  const pmx = Math.min(Math.max(...Pc.slice(0, 20), ...Pg.slice(0, 20), S.PF), 20 * S.PF);
+  const pax = pmx <= 7 ? { top: 7, step: 1 } : niceAxis(pmx * 1.15);   // the paper's 0-7 axis whenever the curves fit
+  const hl = [{ y: S.Popt, cls: 'opt' }]; if (ok) hl.push({ y: S.Popt * (1 + B.Mlo), cls: 'opt' }, { y: S.Popt * (1 + B.Mhi), cls: 'opt' });
   const legendRef = [{ name: `最佳值 ${S.Popt.toFixed(2)}`, c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true }];
-  if (ok) legendRef.push({ name: '最佳值 ×（1 + 失調量界）', c: 'ink', xs: [], ys: [], w: 1, dash: true, legendOnly: true });
-  chPow.set({ title: '輸出功率', x: [0, Nad], y: [0, pax.top], xTicks: xt, yTicks: range(0, pax.step, pax.top), xLabel: '更新次數 k', yLabel: '輸出功率', xName: 'k', yDigits: 3,
+  if (ok) legendRef.push({ name: '最佳值 ×（1 + 失調量上下界）', c: 'ink', xs: [], ys: [], w: 1.5, legendOnly: true });
+  chPow.set({ title: '輸出功率', x: [0, Nad], y: [0, pax.top], xTicks: xt, xMinor, xFmt: t => (paperX && t > 100 && t % 50) ? '' : String(t), yTicks: range(0, pax.step, pax.top), xLabel: '更新次數 k', yLabel: '輸出功率 W<tspan dy="-5" font-size="9">T</tspan><tspan dy="5">(k)R</tspan><tspan dy="3" font-size="9">xx</tspan><tspan dy="-3">W(k)</tspan>', xName: 'k', yDigits: 3,
     hlines: hl, series: seriesCG(Pc, Pg).concat(legendRef) });
   // constraint error on one chart. 6 digits: the paper's linear scales (Fig. 12: 60e-11, Fig. 11: 6e-11); otherwise automatic.
   const Ec = clean(run.Ec), Eg = clean(run.Eg), ref = state.esc === 'g' ? Eg : Ec;
@@ -588,7 +593,9 @@ function drawAdapt() {
   if (state.digits === 6) { const pt = state.esc === 'g' ? 60 : 6; u = 1e-11; top = Math.max(pt, Math.ceil(Math.max(...ref) / u / (pt / 6)) * (pt / 6)); step = top / 6; }
   else { const mx = Math.max(...ref); u = mx > 0 ? 10 ** Math.floor(Math.log10(mx)) : 1; const a = niceAxis(mx / u, 1); top = a.top; step = a.step; }
   const e = Math.round(Math.log10(u));
-  chErr.set({ title: '約束誤差', x: [0, Nad], y: [0, top], xTicks: xt, yTicks: range(0, step, top), xLabel: '更新次數 k', yLabel: e ? `單位 10${sup(e)}` : '‖CᵀW − 𝓕‖²', xName: 'k',
+  const p10 = (m, ex) => `${+m.toPrecision(3)}×10<tspan dy="-5" font-size="8">${ex < 0 ? '−' : ''}${Math.abs(ex)}</tspan>`;
+  chErr.set({ title: '約束誤差', x: [0, Nad], y: [0, top], xTicks: range(0, Nad / 4, Nad), yTicks: range(0, step, top), ml: 70,
+    yFmt: t => Math.abs(t - top) < 1e-9 ? (e ? p10(top, e) : String(+top.toPrecision(3))) : (t === 0 ? '0' : ''), xLabel: '更新次數 k', yLabel: '‖C<tspan dy="-5" font-size="9">T</tspan><tspan dy="5">W(k) − 𝓕‖</tspan><tspan dy="-5" font-size="9">2</tspan>', xName: 'k',
     yTip: v => sci(v * u), series: seriesCG(Ec.map(v => v / u), Eg.map(v => v / u)) });
   const tail = a => { const s = a.slice(Nad - 49); return s.reduce((x, y) => x + y, 0) / s.length; };
   $('tbAdapt').innerHTML = `<tr><th>第 ${Nad} 次更新</th><th><span class="sw b-c"></span>受限 LMS</th><th><span class="sw b-fb"></span>梯度投影法</th></tr>` +
